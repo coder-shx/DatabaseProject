@@ -10,8 +10,6 @@ public record UserResponse(
     String username,
     String name,
     String phone,
-    String email,
-    String address,
     List<Long> vehicleIds,
     List<Long> repairOrderIds
 ) {
@@ -20,9 +18,7 @@ public record UserResponse(
             user.getId(), 
             user.getUsername(), 
             user.getName(), 
-            user.getPhone(), 
-            user.getEmail(), 
-            user.getAddress(),
+            user.getPhone(),
             user.getVehicles() != null ? 
                 user.getVehicles().stream().map(vehicle -> vehicle.getId()).collect(Collectors.toList()) : 
                 List.of(),

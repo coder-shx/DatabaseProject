@@ -18,8 +18,6 @@ public class Feedback {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
-
     @Column
     private String comment;
 
@@ -47,8 +45,6 @@ public class Feedback {
     public void setId(Long id) {
         this.id = id;
     }
-
-
 
     public String getComment() {
         return comment;

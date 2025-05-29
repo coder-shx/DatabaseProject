@@ -31,12 +31,6 @@ public class User {
     @Column(nullable = false)
     private String phone;
 
-    @Column
-    private String email;
-
-    @Column
-    private String address;
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference("user-vehicles")
     private List<Vehicle> vehicles;
@@ -49,7 +43,6 @@ public class User {
     public User() {
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -88,22 +81,6 @@ public class User {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
     }
 
     public List<Vehicle> getVehicles() {

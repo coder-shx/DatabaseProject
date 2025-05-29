@@ -115,10 +115,6 @@
                   <i class="fas fa-phone"></i>
                   <span>{{ user.phone }}</span>
                 </div>
-                <div class="detail-item">
-                  <i class="fas fa-envelope"></i>
-                  <span>{{ user.email }}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -355,10 +351,6 @@
               <input v-model="profileForm.phone" class="form-input" required>
             </div>
             <div class="form-group">
-              <label class="form-label">邮箱</label>
-              <input v-model="profileForm.email" type="email" class="form-input" required>
-            </div>
-            <div class="form-group">
               <label class="form-label">技能类型</label>
               <select v-model="profileForm.skillType" class="form-input" required>
                 <option value="MECHANIC">机械维修</option>
@@ -569,7 +561,7 @@ export default {
         console.log('技师任务API响应:', response.data);
         this.allTasks = response.data || [];
         console.log('设置技师任务数据:', this.allTasks);
-        
+
         if (this.allTasks.length === 0) {
           console.log('没有找到分配给该技师的任务');
         } else {
@@ -797,7 +789,6 @@ export default {
           username: this.user.username, // 保持原用户名
           password: '', // 不更新密码时发送空字符串
           phone: this.profileForm.phone,
-          email: this.profileForm.email,
           skillType: this.profileForm.skillType,
           hourlyRate: parseFloat(this.profileForm.hourlyRate)
         };

@@ -7,11 +7,10 @@ public record AdminResponse(
     String username,
     String name,
     String phone,
-    String email,
     String role
 ) {
     public AdminResponse(Admin admin) {
         this(admin.getId(), admin.getUsername(), admin.getName(), 
-             admin.getPhone(), admin.getEmail(), admin.getRole());
+             admin.getPhone(),  admin.getRole());
     }
 } 

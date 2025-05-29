@@ -37,11 +37,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return 用户信息
      */
     Optional<User> findByPhone(String phone);
-    
-    /**
-     * 根据电子邮件查找用户
-     * @param email 电子邮件
-     * @return 用户信息
-     */
-    Optional<User> findByEmail(String email);
 } 

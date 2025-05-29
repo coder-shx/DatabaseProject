@@ -31,7 +31,6 @@ public class AdminService {
         admin.setPassword(request.password());
         admin.setName(request.name());
         admin.setPhone(request.phone());
-        admin.setEmail(request.email());
         admin.setRole(request.role());
         
         Admin savedAdmin = adminRepository.save(admin);
@@ -65,7 +64,6 @@ public class AdminService {
         }
         admin.setName(request.name());
         admin.setPhone(request.phone());
-        admin.setEmail(request.email());
         admin.setRole(request.role());
         
         Admin updatedAdmin = adminRepository.save(admin);

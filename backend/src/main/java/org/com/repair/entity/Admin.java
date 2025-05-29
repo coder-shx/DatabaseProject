@@ -24,9 +24,6 @@ public class Admin {
     @Column(nullable = false)
     private String phone;
 
-    @Column
-    private String email;
-
     @Column(nullable = false)
     private String role;
 
@@ -73,14 +70,6 @@ public class Admin {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public String getRole() {

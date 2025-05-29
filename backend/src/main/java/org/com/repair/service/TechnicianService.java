@@ -37,7 +37,6 @@ public class TechnicianService {
         technician.setUsername(request.username());
         technician.setPassword(request.password());
         technician.setPhone(request.phone());
-        technician.setEmail(request.email());
         technician.setSkillType(request.skillType());
         technician.setHourlyRate(request.hourlyRate());
         
@@ -84,7 +83,6 @@ public class TechnicianService {
             technician.setPassword(request.password());
         }
         technician.setPhone(request.phone());
-        technician.setEmail(request.email());
         technician.setSkillType(request.skillType());
         technician.setHourlyRate(request.hourlyRate());
         

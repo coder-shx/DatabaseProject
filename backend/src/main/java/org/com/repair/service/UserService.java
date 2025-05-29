@@ -31,8 +31,6 @@ public class UserService {
         user.setPassword(request.password());
         user.setName(request.name());
         user.setPhone(request.phone());
-        user.setEmail(request.email());
-        user.setAddress(request.address());
         
         User savedUser = userRepository.save(user);
         return createSafeUserResponse(savedUser);
@@ -55,8 +53,6 @@ public class UserService {
         
         user.setName(request.name());
         user.setPhone(request.phone());
-        user.setEmail(request.email());
-        user.setAddress(request.address());
         
         if (request.password() != null && !request.password().isEmpty()) {
             user.setPassword(request.password());
@@ -91,8 +87,7 @@ public class UserService {
                 .filter(user -> 
                     user.getName().toLowerCase().contains(searchTerm.toLowerCase()) ||
                     user.getUsername().toLowerCase().contains(searchTerm.toLowerCase()) ||
-                    (user.getPhone() != null && user.getPhone().contains(searchTerm)) ||
-                    (user.getEmail() != null && user.getEmail().toLowerCase().contains(searchTerm.toLowerCase()))
+                    (user.getPhone() != null && user.getPhone().contains(searchTerm))
                 )
                 .map(this::createSafeUserResponse)
                 .collect(Collectors.toList());
@@ -107,8 +102,6 @@ public class UserService {
             user.getUsername(),
             user.getName(),
             user.getPhone(),
-            user.getEmail(),
-            user.getAddress(),
             List.of(), // 暂时返回空列表，避免循环引用
             List.of()  // 暂时返回空列表，避免循环引用
         );

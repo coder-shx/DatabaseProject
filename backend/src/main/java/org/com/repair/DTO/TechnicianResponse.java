@@ -9,13 +9,12 @@ public record TechnicianResponse(
     String employeeId,
     String username,
     String phone,
-    String email,
     SkillType skillType,
     Double hourlyRate
 ) {
     public TechnicianResponse(Technician technician) {
         this(technician.getId(), technician.getName(), technician.getEmployeeId(), 
-             technician.getUsername(), technician.getPhone(), technician.getEmail(), 
+             technician.getUsername(), technician.getPhone(),
              technician.getSkillType(), technician.getHourlyRate());
     }
 } 

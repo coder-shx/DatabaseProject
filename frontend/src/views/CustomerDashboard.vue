@@ -271,14 +271,6 @@
               <label class="form-label">电话</label>
               <input v-model="profileForm.phone" class="form-input" required>
             </div>
-            <div class="form-group">
-              <label class="form-label">邮箱</label>
-              <input v-model="profileForm.email" type="email" class="form-input" required>
-            </div>
-            <div class="form-group">
-              <label class="form-label">地址</label>
-              <input v-model="profileForm.address" class="form-input" required>
-            </div>
             <button type="submit" class="btn btn-primary">
               <i class="fas fa-save"></i> 保存更改
             </button>
@@ -693,8 +685,6 @@ export default {
           password: this.user.password || '', // 如果没有密码字段，发送空字符串
           name: this.profileForm.name,
           phone: this.profileForm.phone,
-          email: this.profileForm.email,
-          address: this.profileForm.address,
           vehicles: this.user.vehicles || [],
           repairOrders: this.user.repairOrders || []
         };

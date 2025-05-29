@@ -47,31 +47,6 @@
               required
             >
           </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-envelope"></i>
-              邮箱地址
-            </label>
-            <input 
-              v-model="formData.email" 
-              class="form-input" 
-              placeholder="请输入邮箱地址" 
-              type="email" 
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-map-marker-alt"></i>
-              联系地址
-            </label>
-            <input 
-              v-model="formData.address" 
-              class="form-input" 
-              placeholder="请输入联系地址" 
-              required
-            >
-          </div>
         </template>
 
         <!-- 管理员注册字段 -->
@@ -85,19 +60,6 @@
               v-model="formData.phone" 
               class="form-input" 
               placeholder="请输入手机号码" 
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-envelope"></i>
-              邮箱地址
-            </label>
-            <input 
-              v-model="formData.email" 
-              class="form-input" 
-              placeholder="请输入邮箱地址" 
-              type="email" 
               required
             >
           </div>
@@ -142,19 +104,6 @@
               v-model="formData.phone" 
               class="form-input" 
               placeholder="请输入手机号码" 
-              required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-envelope"></i>
-              邮箱地址
-            </label>
-            <input 
-              v-model="formData.email" 
-              class="form-input" 
-              placeholder="请输入邮箱地址" 
-              type="email" 
               required
             >
           </div>
@@ -281,8 +230,6 @@ export default {
         username: '',
         password: '',
         phone: '',
-        email: '',
-        address: '',
         role: '',
         employeeId: '',
         skillType: '',
@@ -322,8 +269,6 @@ export default {
         username: '',
         password: '',
         phone: '',
-        email: '',
-        address: '',
         role: '',
         employeeId: '',
         skillType: '',
@@ -401,15 +346,12 @@ export default {
             ...baseData,
             name: this.formData.name,
             phone: this.formData.phone,
-            email: this.formData.email,
-            address: this.formData.address
           };
         case 'admin':
           return {
             ...baseData,
             name: this.formData.name,
             phone: this.formData.phone,
-            email: this.formData.email,
             role: this.formData.role
           };
         case 'technician':
@@ -419,7 +361,6 @@ export default {
             username: this.formData.username,
             password: this.formData.password,
             phone: this.formData.phone,
-            email: this.formData.email,
             skillType: this.formData.skillType,
             hourlyRate: parseFloat(this.formData.hourlyRate)
           };

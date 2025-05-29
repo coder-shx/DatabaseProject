@@ -32,18 +32,15 @@ public class Technician {
     @Column(nullable = false)
     private String phone;
 
-    @Column
-    private String email;
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private SkillType skillType;
+    private SkillType skillType;//工种
 
     @Column(nullable = false)
-    private Double hourlyRate;
+    private Double hourlyRate;//时薪
 
     @ManyToMany(mappedBy = "technicians")
-    private Set<RepairOrder> repairOrders;
+    private Set<RepairOrder> repairOrders;//维修工单
 
     // 枚举类型定义
     public enum SkillType {
@@ -54,7 +51,6 @@ public class Technician {
     public Technician() {
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -101,14 +97,6 @@ public class Technician {
 
     public void setPhone(String phone) {
         this.phone = phone;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public SkillType getSkillType() {

@@ -279,10 +279,6 @@
                   <i class="fas fa-phone"></i>
                   <span>{{ technician.phone }}</span>
                 </div>
-                <div class="detail-item">
-                  <i class="fas fa-envelope"></i>
-                  <span>{{ technician.email }}</span>
-                </div>
               </div>
             </div>
             <div class="tech-actions">
@@ -447,7 +443,6 @@
                 <td>{{ user.username }}</td>
                 <td>{{ user.name }}</td>
                 <td>{{ user.phone }}</td>
-                <td>{{ user.email }}</td>
                 <td>{{ user.vehicleCount || 0 }}</td>
                 <td>{{ user.orderCount || 0 }}</td>
                 <td>
@@ -515,10 +510,6 @@
                 <div class="detail-item">
                   <label>联系电话:</label>
                   <span>{{ selectedOrderDetail.user?.phone || '未知' }}</span>
-                </div>
-                <div class="detail-item">
-                  <label>邮箱:</label>
-                  <span>{{ selectedOrderDetail.user?.email || '未知' }}</span>
                 </div>
               </div>
             </div>
