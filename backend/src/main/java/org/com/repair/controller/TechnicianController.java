@@ -144,4 +144,60 @@ public class TechnicianController {
             ? new ResponseEntity<>(earnings, HttpStatus.OK) 
             : new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
+    
+    @GetMapping("/{id}/statistics")
+    public ResponseEntity<TechnicianStatistics> getTechnicianStatistics(@PathVariable Long id) {
+        TechnicianStatistics statistics = technicianService.getTechnicianStatistics(id);
+        return new ResponseEntity<>(statistics, HttpStatus.OK);
+    }
+    
+    @GetMapping("/{id}/monthly-earnings")
+    public ResponseEntity<Double> getTechnicianMonthlyEarnings(
+            @PathVariable Long id,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+        Double earnings = technicianService.getTechnicianMonthlyEarnings(id, year, month);
+        return new ResponseEntity<>(earnings, HttpStatus.OK);
+    }
+    
+    // 技师统计信息类
+    public static class TechnicianStatistics {
+        private int totalTasks;
+        private int completedTasks;
+        private int pendingTasks;
+        private double averageRating;
+        private double totalEarnings;
+        private double monthlyEarnings;
+        
+        public TechnicianStatistics() {}
+        
+        public TechnicianStatistics(int totalTasks, int completedTasks, int pendingTasks, 
+                                  double averageRating, double totalEarnings, double monthlyEarnings) {
+            this.totalTasks = totalTasks;
+            this.completedTasks = completedTasks;
+            this.pendingTasks = pendingTasks;
+            this.averageRating = averageRating;
+            this.totalEarnings = totalEarnings;
+            this.monthlyEarnings = monthlyEarnings;
+        }
+        
+        // Getters and Setters
+        public int getTotalTasks() { return totalTasks; }
+        public void setTotalTasks(int totalTasks) { this.totalTasks = totalTasks; }
+        
+        public int getCompletedTasks() { return completedTasks; }
+        public void setCompletedTasks(int completedTasks) { this.completedTasks = completedTasks; }
+        
+        public int getPendingTasks() { return pendingTasks; }
+        public void setPendingTasks(int pendingTasks) { this.pendingTasks = pendingTasks; }
+        
+        public double getAverageRating() { return averageRating; }
+        public void setAverageRating(double averageRating) { this.averageRating = averageRating; }
+        
+        public double getTotalEarnings() { return totalEarnings; }
+        public void setTotalEarnings(double totalEarnings) { this.totalEarnings = totalEarnings; }
+        
+        public double getMonthlyEarnings() { return monthlyEarnings; }
+        public void setMonthlyEarnings(double monthlyEarnings) { this.monthlyEarnings = monthlyEarnings; }
+    }
 } 

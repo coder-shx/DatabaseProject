@@ -8,13 +8,14 @@ import org.com.repair.entity.User;
 
 public record FeedbackResponse(
     Long id,
+    Integer rating,
     String comment,
     Date createdAt,
     RepairOrder repairOrder,
     User user
 ) {
     public FeedbackResponse(Feedback feedback) {
-        this(feedback.getId(), feedback.getComment(), 
+        this(feedback.getId(), feedback.getRating(), feedback.getComment(), 
              feedback.getCreatedAt(), feedback.getRepairOrder(), feedback.getUser());
     }
 } 

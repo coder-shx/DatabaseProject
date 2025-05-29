@@ -90,5 +90,35 @@ public class FeedbackController {
         }
     }
     
-
+    @GetMapping("/repair-order/{repairOrderId}/average-rating")
+    public ResponseEntity<Double> getAverageRatingByRepairOrderId(@PathVariable Long repairOrderId) {
+        Double averageRating = feedbackService.getAverageRatingByRepairOrderId(repairOrderId);
+        return new ResponseEntity<>(averageRating, HttpStatus.OK);
+    }
+    
+    @GetMapping("/technician/{technicianId}/average-rating")
+    public ResponseEntity<Double> getAverageRatingByTechnicianId(@PathVariable Long technicianId) {
+        Double averageRating = feedbackService.getAverageRatingByTechnicianId(technicianId);
+        return new ResponseEntity<>(averageRating, HttpStatus.OK);
+    }
+    
+    @GetMapping("/overall-average-rating")
+    public ResponseEntity<Double> getOverallAverageRating() {
+        Double averageRating = feedbackService.getOverallAverageRating();
+        return new ResponseEntity<>(averageRating, HttpStatus.OK);
+    }
+    
+    @GetMapping("/rating-distribution")
+    public ResponseEntity<java.util.Map<Integer, Long>> getRatingDistribution() {
+        java.util.Map<Integer, Long> distribution = feedbackService.getRatingDistribution();
+        return new ResponseEntity<>(distribution, HttpStatus.OK);
+    }
+    
+    @GetMapping("/check-feedback")
+    public ResponseEntity<Boolean> checkUserFeedback(
+            @RequestParam Long repairOrderId, 
+            @RequestParam Long userId) {
+        boolean hasFeedback = feedbackService.hasUserFeedbackForOrder(repairOrderId, userId);
+        return new ResponseEntity<>(hasFeedback, HttpStatus.OK);
+    }
 } 

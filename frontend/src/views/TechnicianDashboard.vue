@@ -128,11 +128,11 @@
             <div class="earnings-stats">
               <div class="earnings-item">
                 <span class="earnings-label">本月收入</span>
-                <span class="earnings-value">¥{{ earnings.monthly }}</span>
+                <span class="earnings-value">¥{{ formatCurrency(earnings.monthly) }}</span>
               </div>
               <div class="earnings-item">
                 <span class="earnings-label">总收入</span>
-                <span class="earnings-value">¥{{ earnings.total }}</span>
+                <span class="earnings-value">¥{{ formatCurrency(earnings.total) }}</span>
               </div>
             </div>
             <button class="btn btn-outline" @click="activeTab = 'earnings'">
@@ -307,7 +307,7 @@
           <div class="earnings-summary">
             <div class="summary-card">
               <h3>本月收入</h3>
-              <div class="amount">¥{{ earnings.monthly }}</div>
+              <div class="amount">¥{{ formatCurrency(earnings.monthly) }}</div>
               <div class="change positive">
                 <i class="fas fa-arrow-up"></i>
                 +12.5%
@@ -315,7 +315,7 @@
             </div>
             <div class="summary-card">
               <h3>平均每单</h3>
-              <div class="amount">¥{{ earnings.averagePerTask }}</div>
+              <div class="amount">¥{{ formatCurrency(earnings.averagePerTask) }}</div>
               <div class="change">
                 <i class="fas fa-minus"></i>
                 持平
@@ -323,7 +323,7 @@
             </div>
             <div class="summary-card">
               <h3>总收入</h3>
-              <div class="amount">¥{{ earnings.total }}</div>
+              <div class="amount">¥{{ formatCurrency(earnings.total) }}</div>
               <div class="tasks-count">{{ statistics.completedTasks }}个任务</div>
             </div>
           </div>
@@ -578,52 +578,31 @@ export default {
       } catch (error) {
         console.error('加载技师任务失败:', error);
         console.error('错误详情:', error.response?.data);
-        // 如果API不存在，使用模拟数据
-        this.allTasks = [
-          {
-            id: 1,
-            orderNumber: 'RO-2024-001',
-            description: '发动机异响检修',
-            status: 'ASSIGNED',
-            createdAt: '2024-12-20T10:00:00',
-            laborCost: 800,
-            vehicle: {
-              id: 1,
-              licensePlate: '豫SU7360',
-              brand: '别克',
-              model: '君越'
-            },
-            user: {
-              id: 1,
-              name: '张万博',
-              phone: '15225394719'
-            }
-          },
-          {
-            id: 2,
-            orderNumber: 'RO-2024-002',
-            description: '刹车片更换',
-            status: 'IN_PROGRESS',
-            createdAt: '2024-12-19T14:30:00',
-            laborCost: 400,
-            vehicle: {
-              id: 2,
-              licensePlate: '京A12345',
-              brand: '丰田',
-              model: '凯美瑞'
-            },
-            user: {
-              id: 2,
-              name: '李明',
-              phone: '13812345678'
-            }
-          }
-        ];
+        
+        // 设置空数组避免界面错误
+        this.allTasks = [];
+        this.$emit('message', `加载任务失败: ${error.response?.data?.message || error.message}`, 'error');
       }
     },
     async loadStatistics() {
       try {
-        // 基于实际任务数据计算统计信息
+        console.log('开始加载技师统计数据，技师ID:', this.user.id);
+        const response = await this.$axios.get(`/technicians/${this.user.id}/statistics`);
+        console.log('技师统计API响应:', response.data);
+        
+        this.statistics = {
+          totalTasks: response.data.totalTasks || 0,
+          completedTasks: response.data.completedTasks || 0,
+          pendingTasks: response.data.pendingTasks || 0,
+          averageRating: response.data.averageRating ? response.data.averageRating.toFixed(1) : '0.0'
+        };
+        
+        console.log('设置统计数据:', this.statistics);
+      } catch (error) {
+        console.error('加载统计数据失败:', error);
+        console.error('错误详情:', error.response?.data);
+        
+        // 基于本地任务数据计算统计信息作为备用
         const totalTasks = this.allTasks.length;
         const completedTasks = this.allTasks.filter(task => task.status === 'COMPLETED').length;
         const pendingTasks = this.allTasks.filter(task => 
@@ -634,21 +613,36 @@ export default {
           totalTasks,
           completedTasks,
           pendingTasks,
-          averageRating: 4.8 // 这个需要从反馈数据计算
+          averageRating: '4.8' // 默认评分
         };
-      } catch (error) {
-        console.error('计算统计信息失败:', error);
-        this.statistics = {
-          totalTasks: 0,
-          completedTasks: 0,
-          pendingTasks: 0,
-          averageRating: 0
-        };
+        
+        console.log('使用本地计算的统计数据:', this.statistics);
       }
     },
     async loadEarnings() {
       try {
-        // 基于完成的任务计算收入
+        console.log('开始加载技师收入数据，技师ID:', this.user.id);
+        
+        // 获取总收入
+        const totalEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/earnings`);
+        const totalEarnings = totalEarningsResponse.data || 0;
+        
+        // 获取本月收入
+        const monthlyEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/monthly-earnings`);
+        const monthlyEarnings = monthlyEarningsResponse.data || 0;
+        
+        this.earnings = {
+          monthly: monthlyEarnings,
+          total: totalEarnings,
+          averagePerTask: this.statistics.completedTasks > 0 ? totalEarnings / this.statistics.completedTasks : 0
+        };
+        
+        console.log('设置收入数据:', this.earnings);
+      } catch (error) {
+        console.error('加载收入数据失败:', error);
+        console.error('错误详情:', error.response?.data);
+        
+        // 基于完成的任务计算收入作为备用
         const completedTasks = this.allTasks.filter(task => task.status === 'COMPLETED');
         const totalEarnings = completedTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
         
@@ -665,13 +659,8 @@ export default {
           total: totalEarnings,
           averagePerTask: completedTasks.length > 0 ? totalEarnings / completedTasks.length : 0
         };
-      } catch (error) {
-        console.error('计算收入失败:', error);
-        this.earnings = {
-          monthly: 0,
-          total: 0,
-          averagePerTask: 0
-        };
+        
+        console.log('使用本地计算的收入数据:', this.earnings);
       }
     },
     toggleUserMenu() {
@@ -817,6 +806,15 @@ export default {
       localStorage.removeItem('user');
       localStorage.removeItem('userRole');
       this.$router.push('/');
+    },
+    formatCurrency(value) {
+      if (value == null || value === undefined) {
+        return '0.00';
+      }
+      return Number(value).toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
   }
 }

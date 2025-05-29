@@ -18,7 +18,8 @@ public class Feedback {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
+    @Column
+    private Integer rating; // 评分字段，1-5分
 
     @Column
     private String comment;
@@ -48,7 +49,13 @@ public class Feedback {
         this.id = id;
     }
 
+    public Integer getRating() {
+        return rating;
+    }
 
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
 
     public String getComment() {
         return comment;

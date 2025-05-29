@@ -45,7 +45,20 @@ public class FeedbackService {
             throw new RuntimeException("您无权对此工单进行评价");
         }
         
+        // 检查该订单是否已经被评价过
+        boolean alreadyFeedback = feedbackRepository.existsByRepairOrderIdAndUserId(
+            request.repairOrderId(), request.userId());
+        if (alreadyFeedback) {
+            throw new RuntimeException("该维修工单已经被评价过，不能重复评价");
+        }
+        
+        // 验证评分范围
+        if (request.rating() != null && (request.rating() < 1 || request.rating() > 5)) {
+            throw new RuntimeException("评分必须在1-5分之间");
+        }
+        
         Feedback feedback = new Feedback();
+        feedback.setRating(request.rating());
         feedback.setComment(request.comment());
         feedback.setCreatedAt(new Date());
         feedback.setRepairOrder(repairOrder);
@@ -82,6 +95,12 @@ public class FeedbackService {
             throw new RuntimeException("您无权修改此反馈");
         }
         
+        // 验证评分范围
+        if (request.rating() != null && (request.rating() < 1 || request.rating() > 5)) {
+            throw new RuntimeException("评分必须在1-5分之间");
+        }
+        
+        feedback.setRating(request.rating());
         feedback.setComment(request.comment());
         
         Feedback updatedFeedback = feedbackRepository.save(feedback);
@@ -111,13 +130,61 @@ public class FeedbackService {
                 .collect(Collectors.toList());
     }
     
-
-    
     public List<FeedbackResponse> getFeedbacksByKeyword(String keyword) {
         return feedbackRepository.findByCommentContaining(keyword).stream()
                 .map(FeedbackResponse::new)
                 .collect(Collectors.toList());
     }
     
-
+    /**
+     * 获取指定维修工单的平均评分
+     */
+    public Double getAverageRatingByRepairOrderId(Long repairOrderId) {
+        List<Feedback> feedbacks = feedbackRepository.findByRepairOrderId(repairOrderId);
+        return feedbacks.stream()
+                .filter(f -> f.getRating() != null)
+                .mapToInt(Feedback::getRating)
+                .average()
+                .orElse(0.0);
+    }
+    
+    /**
+     * 获取指定技师的平均评分
+     */
+    public Double getAverageRatingByTechnicianId(Long technicianId) {
+        Double averageRating = feedbackRepository.getAverageRatingByTechnicianId(technicianId);
+        return averageRating != null ? averageRating : 0.0;
+    }
+    
+    /**
+     * 获取所有反馈的平均评分
+     */
+    public Double getOverallAverageRating() {
+        List<Feedback> allFeedbacks = feedbackRepository.findAll();
+        return allFeedbacks.stream()
+                .filter(f -> f.getRating() != null)
+                .mapToInt(Feedback::getRating)
+                .average()
+                .orElse(0.0);
+    }
+    
+    /**
+     * 获取评分分布统计
+     */
+    public java.util.Map<Integer, Long> getRatingDistribution() {
+        List<Feedback> allFeedbacks = feedbackRepository.findAll();
+        return allFeedbacks.stream()
+                .filter(f -> f.getRating() != null)
+                .collect(Collectors.groupingBy(
+                    Feedback::getRating,
+                    Collectors.counting()
+                ));
+    }
+    
+    /**
+     * 检查用户是否已经对某个维修工单进行了反馈
+     */
+    public boolean hasUserFeedbackForOrder(Long repairOrderId, Long userId) {
+        return feedbackRepository.existsByRepairOrderIdAndUserId(repairOrderId, userId);
+    }
 } 
