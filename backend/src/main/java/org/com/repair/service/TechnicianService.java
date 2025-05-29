@@ -1,13 +1,16 @@
 package org.com.repair.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.com.repair.DTO.NewTechnicianRequest;
 import org.com.repair.DTO.TechnicianResponse;
+import org.com.repair.controller.TechnicianController.TechnicianStatistics;
 import org.com.repair.entity.Technician;
 import org.com.repair.entity.Technician.SkillType;
+import org.com.repair.repository.RepairOrderRepository;
 import org.com.repair.repository.TechnicianRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,9 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 public class TechnicianService {
     
     private final TechnicianRepository technicianRepository;
+    private final RepairOrderRepository repairOrderRepository;
+    private final FeedbackService feedbackService;
     
-    public TechnicianService(TechnicianRepository technicianRepository) {
+    public TechnicianService(TechnicianRepository technicianRepository, 
+                           RepairOrderRepository repairOrderRepository,
+                           FeedbackService feedbackService) {
         this.technicianRepository = technicianRepository;
+        this.repairOrderRepository = repairOrderRepository;
+        this.feedbackService = feedbackService;
     }
     
     @Transactional
@@ -149,5 +158,44 @@ public class TechnicianService {
     
     public long getActiveTechniciansCount() {
         return technicianRepository.count(); // 假设所有技师都是活跃的
+    }
+    
+    public TechnicianStatistics getTechnicianStatistics(Long technicianId) {
+        // 获取技师的所有任务
+        List<org.com.repair.entity.RepairOrder> allTasks = repairOrderRepository.findByTechnicianId(technicianId);
+        
+        int totalTasks = allTasks.size();
+        int completedTasks = (int) allTasks.stream()
+            .filter(task -> "COMPLETED".equals(task.getStatus()))
+            .count();
+        int pendingTasks = (int) allTasks.stream()
+            .filter(task -> "ASSIGNED".equals(task.getStatus()) || "IN_PROGRESS".equals(task.getStatus()))
+            .count();
+        
+        // 获取平均评分
+        Double averageRating = feedbackService.getAverageRatingByTechnicianId(technicianId);
+        if (averageRating == null) {
+            averageRating = 0.0;
+        }
+        
+        // 获取总收入
+        Double totalEarnings = technicianRepository.calculateTotalEarnings(technicianId);
+        if (totalEarnings == null) {
+            totalEarnings = 0.0;
+        }
+        
+        // 获取本月收入
+        Double monthlyEarnings = getTechnicianMonthlyEarnings(technicianId, null, null);
+        
+        return new TechnicianStatistics(totalTasks, completedTasks, pendingTasks, 
+                                      averageRating, totalEarnings, monthlyEarnings);
+    }
+    
+    public Double getTechnicianMonthlyEarnings(Long technicianId, Integer year, Integer month) {
+        LocalDate now = LocalDate.now();
+        int targetYear = year != null ? year : now.getYear();
+        int targetMonth = month != null ? month : now.getMonthValue();
+        
+        return technicianRepository.calculateMonthlyEarnings(technicianId, targetYear, targetMonth);
     }
 } 

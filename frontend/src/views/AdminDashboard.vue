@@ -862,12 +862,14 @@ export default {
     },
     async loadUsers() {
       try {
-        const response = await this.$axios.get('/users');
+        const response = await this.$axios.get('/users/with-stats');
         this.users = Array.isArray(response.data) ? response.data : [];
-        console.log('加载的用户数据:', this.users);
+        console.log('加载的用户数据（包含统计信息）:', this.users);
       } catch (error) {
         console.error('加载用户失败:', error);
+        console.error('错误详情:', error.response?.data);
         this.users = [];
+        this.$emit('message', `加载用户数据失败: ${error.response?.data?.message || error.message}`, 'error');
       }
     },
     async loadDashboardStats() {

@@ -234,19 +234,21 @@
         </div>
         
         <div class="feedback-container">
-          <div v-if="feedbacks.length === 0" class="empty-state">
+          <div v-if="completedOrdersWithoutFeedback.length === 0" class="empty-state">
             <i class="fas fa-comments"></i>
-            <h3>暂无反馈记录</h3>
+            <h3>暂无待评价订单</h3>
             <p>完成维修后可以提交反馈</p>
           </div>
-          <div v-for="feedback in feedbacks" :key="feedback.id" class="feedback-card">
+          
+          <!-- 显示可反馈的维修单 -->
+          <div v-for="order in completedOrdersWithoutFeedback" :key="'order-' + order.id" class="feedback-prompt">
             <div class="feedback-header">
-              <small>{{ formatDate(feedback.createdDate) }}</small>
+              <small>{{ formatDate(order.completedAt || order.createdAt) }}</small>
             </div>
-            <p class="feedback-comment">{{ feedback.comment }}</p>
-            <div class="feedback-order">
-              <small>维修单 #{{ feedback.repairOrderId }}</small>
-            </div>
+            <p class="feedback-prompt-text">维修单 #{{ order.id }} 等待您的评价</p>
+            <button @click="openFeedbackModal(order)" class="btn btn-outline">
+              <i class="fas fa-star"></i> 立即评价
+            </button>
           </div>
         </div>
       </div>
@@ -471,7 +473,24 @@
             <p>{{ getVehicleDisplay(feedbackOrder) }} - {{ feedbackOrder.description }}</p>
           </div>
           
-
+          <!-- 服务满意度评分 -->
+          <div class="form-group">
+            <label class="form-label">服务满意度</label>
+            <div class="rating-container">
+              <div class="star-rating">
+                <span 
+                  v-for="star in 5" 
+                  :key="star" 
+                  class="star" 
+                  :class="{ 'active': star <= feedbackForm.rating }" 
+                  @click="feedbackForm.rating = star"
+                >
+                  <i class="fas fa-star"></i>
+                </span>
+              </div>
+              <span class="rating-text">{{ getRatingText(feedbackForm.rating) }}</span>
+            </div>
+          </div>
           
           <div class="form-group">
             <label class="form-label">评价内容</label>
@@ -483,7 +502,7 @@
             <button type="button" @click="showFeedback = false" class="btn btn-outline">
               取消
             </button>
-            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+            <button type="submit" class="btn btn-primary" :disabled="isSubmitting || !isValidFeedback">
               <i class="fas fa-paper-plane"></i> {{ isSubmitting ? '提交中...' : '提交评价' }}
             </button>
           </div>
@@ -508,6 +527,7 @@ export default {
       vehicles: [],
       repairOrders: [],
       feedbacks: [],
+      completedOrdersWithoutFeedback: [],
       statistics: {
         vehicleCount: 0,
         repairCount: 0,
@@ -533,9 +553,15 @@ export default {
       selectedOrder: null,
       feedbackOrder: null,
       feedbackForm: {
-        comment: ''
+        comment: '',
+        rating: 0
       },
       isSubmitting: false
+    }
+  },
+  computed: {
+    isValidFeedback() {
+      return this.feedbackForm.rating > 0 && this.feedbackForm.comment.trim().length > 0;
     }
   },
   created() {
@@ -636,6 +662,7 @@ export default {
       try {
         const response = await this.$axios.get(`/feedbacks/user/${this.user.id}`);
         this.feedbacks = response.data;
+        this.completedOrdersWithoutFeedback = this.repairOrders.filter(order => order.status === 'COMPLETED' && !this.hasUserFeedback(order));
       } catch (error) {
         console.error('加载反馈失败:', error);
       }
@@ -647,6 +674,10 @@ export default {
         pendingCount: this.repairOrders.filter(order => order.status === 'PENDING' || order.status === 'IN_PROGRESS').length,
         totalCost: this.repairOrders.reduce((sum, order) => sum + (order.actualCost || order.estimatedCost || 0), 0)
       };
+      
+      // 更新可反馈的维修单列表
+      this.completedOrdersWithoutFeedback = this.repairOrders
+        .filter(order => order.status === 'COMPLETED' && !this.hasUserFeedback(order));
     },
     toggleUserMenu() {
       this.showUserMenu = !this.showUserMenu;
@@ -795,14 +826,20 @@ export default {
     },
     openFeedbackModal(order) {
       this.feedbackOrder = order;
-      this.feedbackForm = { comment: '' };
+      this.feedbackForm = { comment: '', rating: 0 };
       this.showFeedback = true;
     },
     async submitFeedback() {
       try {
+        if (!this.isValidFeedback) {
+          this.$emit('message', '请至少填写评分和评价内容', 'warning');
+          return;
+        }
+        
         this.isSubmitting = true;
         
         const feedbackData = {
+          rating: this.feedbackForm.rating,
           comment: this.feedbackForm.comment,
           createdAt: new Date(),
           repairOrderId: this.feedbackOrder.id,
@@ -812,8 +849,12 @@ export default {
         const response = await this.$axios.post('/feedbacks', feedbackData);
         this.feedbacks.push(response.data);
         this.showFeedback = false;
-        this.feedbackForm = { comment: '' };
+        this.feedbackForm = { comment: '', rating: 0 };
         this.feedbackOrder = null;
+        
+        // 重新计算统计数据，更新可反馈的订单列表
+        this.calculateStatistics();
+        
         this.$emit('message', '反馈提交成功', 'success');
       } catch (error) {
         console.error('提交反馈失败:', error);
@@ -858,6 +899,10 @@ export default {
       localStorage.removeItem('user');
       localStorage.removeItem('userRole');
       this.$router.push('/');
+    },
+    getRatingText(rating) {
+      const texts = ['请评分', '很差', '一般', '满意', '不错', '非常满意'];
+      return texts[rating] || texts[0];
     }
   }
 }
@@ -1234,8 +1279,6 @@ export default {
   margin-top: 1rem;
 }
 
-
-
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
@@ -1441,8 +1484,6 @@ export default {
   font-size: 0.875rem;
 }
 
-
-
 .profile-container {
   max-width: 600px;
 }
@@ -1505,5 +1546,52 @@ export default {
   .modal-footer {
     flex-direction: column;
   }
+}
+
+/* 评分组件样式 */
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.star-rating {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star {
+  cursor: pointer;
+  font-size: 1.5rem;
+  color: #d1d5db;
+  transition: color 0.2s;
+}
+
+.star:hover, .star.active {
+  color: #f59e0b;
+}
+
+.rating-text {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+/* 反馈提示样式优化 */
+.feedback-prompt {
+  background: #f0f9ff;
+  border-left: 4px solid #0ea5e9;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  transition: transform 0.2s;
+}
+
+.feedback-prompt:hover {
+  transform: translateX(2px);
+}
+
+.feedback-prompt-text {
+  margin: 0.5rem 0;
+  font-weight: 500;
 }
 </style>

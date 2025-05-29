@@ -97,6 +97,26 @@ public interface TechnicianRepository extends JpaRepository<Technician, Long> {
     Double calculateTotalEarnings(@Param("technicianId") Long technicianId);
     
     /**
+     * 计算技师指定月份的收入
+     * @param technicianId 技师ID
+     * @param year 年份
+     * @param month 月份
+     * @return 月收入
+     */
+    @Query(value = "SELECT COALESCE(SUM(r.labor_cost / " +
+                   "(SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id)), 0) " +
+                   "FROM repair_order r " +
+                   "JOIN order_technician ot ON r.id = ot.order_id " +
+                   "WHERE ot.technician_id = :technicianId " +
+                   "AND r.status = 'COMPLETED' " +
+                   "AND YEAR(r.completed_at) = :year " +
+                   "AND MONTH(r.completed_at) = :month",
+           nativeQuery = true)
+    Double calculateMonthlyEarnings(@Param("technicianId") Long technicianId, 
+                                   @Param("year") int year, 
+                                   @Param("month") int month);
+    
+    /**
      * 查找指定时间段内可用的技师列表（未分配满工单的技师）
      * @param skillType 技能类型
      * @return 可用技师列表

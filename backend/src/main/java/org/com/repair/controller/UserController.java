@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.com.repair.DTO.NewUserRequest;
 import org.com.repair.DTO.UserResponse;
+import org.com.repair.DTO.UserWithStatsResponse;
 import org.com.repair.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +58,12 @@ public class UserController {
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
+        return new ResponseEntity<>(users, HttpStatus.OK);
+    }
+    
+    @GetMapping("/with-stats")
+    public ResponseEntity<List<UserWithStatsResponse>> getUsersWithStats() {
+        List<UserWithStatsResponse> users = userService.getUsersWithStats();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
     
