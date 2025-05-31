@@ -70,7 +70,7 @@
             </div>
             <div class="stat-content">
               <h3>{{ statistics.completedTasks }}</h3>
-              <p>已完成任务</p>
+              <p>已完成</p>
             </div>
           </div>
           <div class="stat-card">
@@ -79,16 +79,16 @@
             </div>
             <div class="stat-content">
               <h3>{{ statistics.pendingTasks }}</h3>
-              <p>进行中任务</p>
+              <p>进行中</p>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-              <i class="fas fa-dollar-sign"></i>
+              <i class="fas fa-star"></i>
             </div>
             <div class="stat-content">
-              <h3>¥{{ formatCurrency(statistics.monthlyEarnings || 0) }}</h3>
-              <p>本月收入</p>
+              <h3>{{ statistics.averageRating }}</h3>
+              <p>平均评分</p>
             </div>
           </div>
         </div>
@@ -504,7 +504,7 @@ export default {
         totalTasks: 0,
         completedTasks: 0,
         pendingTasks: 0,
-        monthlyEarnings: 0
+        averageRating: 0
       },
       earnings: {
         monthly: 0,
@@ -594,12 +594,13 @@ export default {
           totalTasks: response.data.totalTasks || 0,
           completedTasks: response.data.completedTasks || 0,
           pendingTasks: response.data.pendingTasks || 0,
-          monthlyEarnings: response.data.monthlyEarnings || 0
+          averageRating: response.data.averageRating ? response.data.averageRating.toFixed(1) : '0.0'
         };
         
         console.log('设置统计数据:', this.statistics);
       } catch (error) {
         console.error('加载统计数据失败:', error);
+        console.error('错误详情:', error.response?.data);
         
         // 基于本地任务数据计算统计信息作为备用
         const totalTasks = this.allTasks.length;
@@ -612,13 +613,12 @@ export default {
           totalTasks,
           completedTasks,
           pendingTasks,
-          monthlyEarnings: 0 // 无法本地计算，需要服务器端
+          averageRating: '4.8' // 默认评分
         };
         
         console.log('使用本地计算的统计数据:', this.statistics);
       }
     },
-    
     async loadEarnings() {
       try {
         console.log('开始加载技师收入数据，技师ID:', this.user.id);
@@ -631,43 +631,38 @@ export default {
         const monthlyEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/monthly-earnings`);
         const monthlyEarnings = monthlyEarningsResponse.data || 0;
         
-        // 计算平均每任务收入
-        const completedTaskCount = this.statistics.completedTasks || 1;
-        const averagePerTask = totalEarnings / completedTaskCount;
-        
         this.earnings = {
           monthly: monthlyEarnings,
           total: totalEarnings,
-          averagePerTask: Math.round(averagePerTask * 100) / 100 // 保留两位小数
+          averagePerTask: this.statistics.completedTasks > 0 ? totalEarnings / this.statistics.completedTasks : 0
         };
         
         console.log('设置收入数据:', this.earnings);
       } catch (error) {
         console.error('加载收入数据失败:', error);
+        console.error('错误详情:', error.response?.data);
         
-        // 基于完成的任务估算收入作为备用
+        // 基于完成的任务计算收入作为备用
         const completedTasks = this.allTasks.filter(task => task.status === 'COMPLETED');
-        const estimatedTotal = completedTasks.reduce((sum, task) => {
-          // 估算：假设每个任务平均工作8小时
-          const estimatedHours = 8;
-          const hourlyRate = this.user.hourlyRate || 50;
-          return sum + (estimatedHours * hourlyRate);
-        }, 0);
+        const totalEarnings = completedTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
+        
+        // 计算本月收入（简化版本）
+        const currentMonth = new Date().getMonth();
+        const monthlyTasks = completedTasks.filter(task => {
+          const taskMonth = new Date(task.completedAt || task.createdAt).getMonth();
+          return taskMonth === currentMonth;
+        });
+        const monthlyEarnings = monthlyTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
         
         this.earnings = {
-          monthly: Math.round(estimatedTotal * 0.3 * 100) / 100, // 假设本月占30%
-          total: Math.round(estimatedTotal * 100) / 100,
-          averagePerTask: completedTasks.length > 0 ? Math.round((estimatedTotal / completedTasks.length) * 100) / 100 : 0
+          monthly: monthlyEarnings,
+          total: totalEarnings,
+          averagePerTask: completedTasks.length > 0 ? totalEarnings / completedTasks.length : 0
         };
         
-        console.log('使用估算的收入数据:', this.earnings);
+        console.log('使用本地计算的收入数据:', this.earnings);
       }
     },
-    
-    formatCurrency(amount) {
-      return Math.round((amount || 0) * 100) / 100;
-    },
-    
     toggleUserMenu() {
       this.showUserMenu = !this.showUserMenu;
     },
@@ -811,6 +806,15 @@ export default {
       localStorage.removeItem('user');
       localStorage.removeItem('userRole');
       this.$router.push('/');
+    },
+    formatCurrency(value) {
+      if (value == null || value === undefined) {
+        return '0.00';
+      }
+      return Number(value).toLocaleString('zh-CN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
   }
 }

@@ -1,13 +1,11 @@
 package org.com.repair.service;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.com.repair.DTO.NewRepairOrderRequest;
@@ -51,35 +49,54 @@ public class RepairOrderService {
         Vehicle vehicle = vehicleRepository.findById(request.vehicleId())
                 .orElseThrow(() -> new RuntimeException("车辆不存在"));
         
-        RepairOrder repairOrder = new RepairOrder();
-        repairOrder.setOrderNumber(generateOrderNumber());
-        repairOrder.setStatus(request.status() != null ? request.status() : RepairStatus.PENDING);
-        repairOrder.setDescription(request.description());
-        repairOrder.setCreatedAt(request.createdAt() != null ? request.createdAt() : new Date());
-        repairOrder.setUpdatedAt(new Date());
-        repairOrder.setCompletedAt(request.completedAt());
-        repairOrder.setLaborCost(request.laborCost());
-        repairOrder.setMaterialCost(request.materialCost());
-        repairOrder.setTotalCost(request.totalCost());
-        repairOrder.setUser(user);
-        repairOrder.setVehicle(vehicle);
+        // 验证车辆是否属于该用户
+        if (!vehicle.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("车辆不属于该用户");
+        }
         
+        // 分配维修技师
+        Set<Technician> technicians = new HashSet<>();
         if (request.technicianIds() != null && !request.technicianIds().isEmpty()) {
-            Set<Technician> technicians = new HashSet<>();
             for (Long technicianId : request.technicianIds()) {
                 Technician technician = technicianRepository.findById(technicianId)
                         .orElseThrow(() -> new RuntimeException("技师不存在: " + technicianId));
                 technicians.add(technician);
             }
-            repairOrder.setTechnicians(technicians);
         }
         
-        RepairOrder savedOrder = repairOrderRepository.save(repairOrder);
+        // 创建工单
+        RepairOrder order = new RepairOrder();
+        order.setOrderNumber(generateOrderNumber());
+        order.setStatus(request.status() != null ? request.status() : RepairStatus.PENDING);
+        order.setDescription(request.description());
+        
+        Date now = new Date();
+        order.setCreatedAt(now);
+        order.setUpdatedAt(now);
+        
+        order.setUser(user);
+        order.setVehicle(vehicle);
+        order.setTechnicians(technicians);
+        
+        // 如果有提供费用信息，则设置
+        if (request.laborCost() != null) {
+            order.setLaborCost(request.laborCost());
+        }
+        if (request.materialCost() != null) {
+            order.setMaterialCost(request.materialCost());
+        }
+        if (request.totalCost() != null) {
+            order.setTotalCost(request.totalCost());
+        } else if (request.laborCost() != null && request.materialCost() != null) {
+            order.setTotalCost(request.laborCost() + request.materialCost());
+        }
+        
+        RepairOrder savedOrder = repairOrderRepository.save(order);
         return new RepairOrderResponse(savedOrder);
     }
     
     public Optional<RepairOrderResponse> getRepairOrderById(Long id) {
-        return repairOrderRepository.findByIdWithAllDetails(id)
+        return repairOrderRepository.findById(id)
                 .map(RepairOrderResponse::new);
     }
     
@@ -101,144 +118,40 @@ public class RepairOrderService {
                 .collect(Collectors.toList());
     }
     
-    public List<RepairOrderResponse> getRepairOrdersByStatus(RepairStatus status) {
-        return repairOrderRepository.findByStatus(status).stream()
-                .map(RepairOrderResponse::new)
-                .collect(Collectors.toList());
-    }
-    
-    public List<RepairOrderResponse> getUncompletedRepairOrders() {
-        return repairOrderRepository.findUncompletedOrders().stream()
-                .map(RepairOrderResponse::new)
-                .collect(Collectors.toList());
-    }
-    
-    public List<RepairOrderResponse> getAllRepairOrders() {
-        return repairOrderRepository.findAllWithDetails().stream()
-                .map(RepairOrderResponse::new)
-                .collect(Collectors.toList());
-    }
-    
-    // AdminController需要的方法
-    public List<RepairOrderResponse> getAllRepairOrdersWithDetails() {
-        return repairOrderRepository.findAllWithDetails().stream()
-                .map(RepairOrderResponse::new)
-                .collect(Collectors.toList());
-    }
-    
-    public Map<String, Object> getDetailedStatistics(String startDate, String endDate) {
-        Map<String, Object> statistics = new HashMap<>();
-        
-        try {
-            List<RepairOrder> allOrders;
-            
-            if (startDate != null && endDate != null && !startDate.isEmpty() && !endDate.isEmpty()) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                Date start = dateFormat.parse(startDate);
-                Date end = dateFormat.parse(endDate);
-                allOrders = repairOrderRepository.findByCreatedAtBetween(start, end);
-            } else {
-                allOrders = repairOrderRepository.findAll();
-            }
-            
-            // 基础统计
-            long totalOrders = allOrders.size();
-            long completedOrders = allOrders.stream()
-                    .filter(order -> RepairStatus.COMPLETED.equals(order.getStatus()))
-                    .count();
-            long pendingOrders = allOrders.stream()
-                    .filter(order -> RepairStatus.PENDING.equals(order.getStatus()))
-                    .count();
-            long inProgressOrders = allOrders.stream()
-                    .filter(order -> RepairStatus.IN_PROGRESS.equals(order.getStatus()))
-                    .count();
-            
-            // 费用统计
-            double totalRevenue = allOrders.stream()
-                    .filter(order -> order.getTotalCost() != null)
-                    .mapToDouble(RepairOrder::getTotalCost)
-                    .sum();
-            
-            double totalLaborCost = allOrders.stream()
-                    .filter(order -> order.getLaborCost() != null)
-                    .mapToDouble(RepairOrder::getLaborCost)
-                    .sum();
-            
-            double totalMaterialCost = allOrders.stream()
-                    .filter(order -> order.getMaterialCost() != null)
-                    .mapToDouble(RepairOrder::getMaterialCost)
-                    .sum();
-            
-            // 平均订单价值
-            double averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-            
-            statistics.put("totalOrders", totalOrders);
-            statistics.put("completedOrders", completedOrders);
-            statistics.put("pendingOrders", pendingOrders);
-            statistics.put("inProgressOrders", inProgressOrders);
-            statistics.put("totalRevenue", Math.round(totalRevenue * 100.0) / 100.0);
-            statistics.put("laborCost", Math.round(totalLaborCost * 100.0) / 100.0);
-            statistics.put("materialCost", Math.round(totalMaterialCost * 100.0) / 100.0);
-            statistics.put("averageOrderValue", Math.round(averageOrderValue * 100.0) / 100.0);
-            
-            // 完成率
-            double completionRate = totalOrders > 0 ? (double) completedOrders / totalOrders * 100 : 0;
-            statistics.put("completionRate", Math.round(completionRate * 100.0) / 100.0);
-            
-        } catch (Exception e) {
-            // 返回默认统计数据
-            statistics.put("totalOrders", 0);
-            statistics.put("completedOrders", 0);
-            statistics.put("pendingOrders", 0);
-            statistics.put("inProgressOrders", 0);
-            statistics.put("totalRevenue", 0.0);
-            statistics.put("laborCost", 0.0);
-            statistics.put("materialCost", 0.0);
-            statistics.put("averageOrderValue", 0.0);
-            statistics.put("completionRate", 0.0);
-        }
-        
-        return statistics;
-    }
-    
     @Transactional
     public RepairOrderResponse updateRepairOrderStatus(Long id, RepairStatus status) {
-        RepairOrder repairOrder = repairOrderRepository.findById(id)
+        RepairOrder order = repairOrderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("维修工单不存在"));
         
-        repairOrder.setStatus(status);
-        repairOrder.setUpdatedAt(new Date());
+        order.setStatus(status);
+        order.setUpdatedAt(new Date());
         
         if (status == RepairStatus.COMPLETED) {
-            repairOrder.setCompletedAt(new Date());
+            order.setCompletedAt(new Date());
         }
         
-        RepairOrder updatedOrder = repairOrderRepository.save(repairOrder);
+        RepairOrder updatedOrder = repairOrderRepository.save(order);
         return new RepairOrderResponse(updatedOrder);
     }
     
     @Transactional
     public RepairOrderResponse updateRepairOrder(Long id, NewRepairOrderRequest request) {
-        RepairOrder repairOrder = repairOrderRepository.findById(id)
+        RepairOrder order = repairOrderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("维修工单不存在"));
         
         if (request.status() != null) {
-            repairOrder.setStatus(request.status());
-        }
-        if (request.description() != null) {
-            repairOrder.setDescription(request.description());
-        }
-        if (request.laborCost() != null) {
-            repairOrder.setLaborCost(request.laborCost());
-        }
-        if (request.materialCost() != null) {
-            repairOrder.setMaterialCost(request.materialCost());
-        }
-        if (request.totalCost() != null) {
-            repairOrder.setTotalCost(request.totalCost());
+            order.setStatus(request.status());
         }
         
-        repairOrder.setUpdatedAt(new Date());
+        if (request.description() != null) {
+            order.setDescription(request.description());
+        }
+        
+        if (request.vehicleId() != null && !order.getVehicle().getId().equals(request.vehicleId())) {
+            Vehicle vehicle = vehicleRepository.findById(request.vehicleId())
+                    .orElseThrow(() -> new RuntimeException("车辆不存在"));
+            order.setVehicle(vehicle);
+        }
         
         if (request.technicianIds() != null) {
             Set<Technician> technicians = new HashSet<>();
@@ -247,10 +160,28 @@ public class RepairOrderService {
                         .orElseThrow(() -> new RuntimeException("技师不存在: " + technicianId));
                 technicians.add(technician);
             }
-            repairOrder.setTechnicians(technicians);
+            order.setTechnicians(technicians);
         }
         
-        RepairOrder updatedOrder = repairOrderRepository.save(repairOrder);
+        if (request.laborCost() != null) {
+            order.setLaborCost(request.laborCost());
+        }
+        
+        if (request.materialCost() != null) {
+            order.setMaterialCost(request.materialCost());
+        }
+        
+        if (request.totalCost() != null) {
+            order.setTotalCost(request.totalCost());
+        } else if (request.laborCost() != null || request.materialCost() != null) {
+            double laborCost = request.laborCost() != null ? request.laborCost() : (order.getLaborCost() != null ? order.getLaborCost() : 0);
+            double materialCost = request.materialCost() != null ? request.materialCost() : (order.getMaterialCost() != null ? order.getMaterialCost() : 0);
+            order.setTotalCost(laborCost + materialCost);
+        }
+        
+        order.setUpdatedAt(new Date());
+        
+        RepairOrder updatedOrder = repairOrderRepository.save(order);
         return new RepairOrderResponse(updatedOrder);
     }
     
@@ -263,7 +194,24 @@ public class RepairOrderService {
         return false;
     }
     
-    // 统计分析方法
+    public List<RepairOrderResponse> getAllRepairOrders() {
+        return repairOrderRepository.findAll().stream()
+                .map(RepairOrderResponse::new)
+                .collect(Collectors.toList());
+    }
+    
+    public List<RepairOrderResponse> getRepairOrdersByStatus(RepairStatus status) {
+        return repairOrderRepository.findByStatus(status).stream()
+                .map(RepairOrderResponse::new)
+                .collect(Collectors.toList());
+    }
+    
+    public List<RepairOrderResponse> getUncompletedRepairOrders() {
+        return repairOrderRepository.findUncompletedOrders().stream()
+                .map(RepairOrderResponse::new)
+                .collect(Collectors.toList());
+    }
+    
     public Object[] getQuarterlyCostAnalysis(int year, int quarter) {
         return repairOrderRepository.getQuarterlyCostAnalysis(year, quarter);
     }
@@ -281,9 +229,19 @@ public class RepairOrderService {
     }
     
     private String generateOrderNumber() {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-        String dateStr = dateFormat.format(new Date());
-        long count = repairOrderRepository.count() + 1;
-        return "RO" + dateStr + String.format("%04d", count);
+        return "RO-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
-}
+    
+    // 新增的统计方法
+    public long getTotalOrdersCount() {
+        return repairOrderRepository.count();
+    }
+    
+    public long getPendingOrdersCount() {
+        return repairOrderRepository.countByStatus(RepairStatus.PENDING);
+    }
+    
+    public long getCompletedOrdersCount() {
+        return repairOrderRepository.countByStatus(RepairStatus.COMPLETED);
+    }
+} 
