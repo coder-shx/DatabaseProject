@@ -719,7 +719,10 @@ export default {
       return this.technicians.filter(tech => tech.status !== 'INACTIVE');
     },
     totalCost() {
-      return (parseFloat(this.assignForm.laborCost) || 0) + (parseFloat(this.assignForm.materialCost) || 0);
+      // 修复浮点数计算精度问题
+      const laborCost = parseFloat(this.assignForm.laborCost) || 0;
+      const materialCost = parseFloat(this.assignForm.materialCost) || 0;
+      return Math.round((laborCost + materialCost) * 100) / 100; // 保留两位小数
     },
     // 图表数据计算属性
     revenueChartData() {
@@ -831,8 +834,21 @@ export default {
     
     async refreshData() {
       this.$emit('message', '正在刷新数据...', 'info');
-      await this.loadData();
-      this.$emit('message', '数据刷新完成', 'success');
+      this.isLoading = true;
+      try {
+        await this.loadData();
+        // 强制重新计算统计数据
+        await this.loadDashboardStats();
+        if (this.isSuperAdmin) {
+          await this.loadDetailedStatistics();
+        }
+        this.$emit('message', '数据刷新完成', 'success');
+      } catch (error) {
+        console.error('刷新数据失败:', error);
+        this.$emit('message', '刷新数据失败: ' + error.message, 'error');
+      } finally {
+        this.isLoading = false;
+      }
     },
     async loadOrders() {
       try {
@@ -874,26 +890,44 @@ export default {
     },
     async loadDashboardStats() {
       try {
-        // 尝试从API获取统计数据
         const response = await this.$axios.get('/admins/dashboard-stats');
         this.dashboardStats = response.data;
-        console.log('从API加载的统计数据:', this.dashboardStats);
+        console.log('加载统计数据成功:', this.dashboardStats);
       } catch (error) {
         console.error('加载统计数据失败，使用本地计算:', error);
-        // 确保数据已初始化
+        // 基于本地数据计算统计信息
         const orders = Array.isArray(this.allOrders) ? this.allOrders : [];
         const techs = Array.isArray(this.technicians) ? this.technicians : [];
         
-        // 基于本地数据计算统计信息
         this.dashboardStats = {
           totalOrders: orders.length,
           pendingOrders: orders.filter(o => o.status === 'PENDING').length,
           completedOrders: orders.filter(o => o.status === 'COMPLETED').length,
-          activeTechnicians: techs.length // 移除状态过滤，因为模拟数据没有status字段
+          activeTechnicians: techs.length
         };
-        console.log('本地计算的统计数据:', this.dashboardStats);
       }
     },
+    async loadDetailedStatistics() {
+      if (!this.isSuperAdmin) return;
+      
+      try {
+        const params = {};
+        if this.statisticsDateRange.start) {
+          params.startDate = this.statisticsDateRange.start;
+        }
+        if (this.statisticsDateRange.end) {
+          params.endDate = this.statisticsDateRange.end;
+        }
+        
+        const response = await this.$axios.get('/admins/detailed-statistics', { params });
+        this.statistics = response.data;
+        console.log('加载详细统计数据成功:', this.statistics);
+      } catch (error) {
+        console.error('加载详细统计数据失败，使用本地计算:', error);
+        this.calculateLocalStatistics();
+      }
+    },
+    
     async loadStatistics() {
       if (!this.isSuperAdmin) return;
       
@@ -996,13 +1030,20 @@ export default {
     },
     async confirmAssign() {
       try {
+        // 使用修复后的浮点数计算
+        const laborCost = Math.round(parseFloat(this.assignForm.laborCost || 0) * 100) / 100;
+        const materialCost = Math.round(parseFloat(this.assignForm.materialCost || 0) * 100) / 100;
+        const totalCost = Math.round((laborCost + materialCost) * 100) / 100;
+        
         const updateData = {
           technicianIds: this.assignForm.technicianIds,
-          laborCost: parseFloat(this.assignForm.laborCost),
-          materialCost: parseFloat(this.assignForm.materialCost),
-          totalCost: this.totalCost,
+          laborCost: laborCost,
+          materialCost: materialCost,
+          totalCost: totalCost,
           status: 'ASSIGNED'
         };
+        
+        console.log('分配订单数据:', updateData);
         
         await this.$axios.put(`/repair-orders/${this.selectedOrder.id}`, updateData);
         
@@ -1014,11 +1055,12 @@ export default {
         
         this.closeAssignModal();
         this.$emit('message', '订单分配成功', 'success');
-        // 重新加载数据以更新统计信息
-        await this.loadData();
+        
+        // 重新加载所有数据以确保同步
+        await this.refreshData();
       } catch (error) {
         console.error('分配订单失败:', error);
-        this.$emit('message', '分配订单失败', 'error');
+        this.$emit('message', '分配订单失败: ' + (error.response?.data?.message || error.message), 'error');
       }
     },
     closeAssignModal() {
@@ -1027,13 +1069,22 @@ export default {
     },
     async viewOrderDetail(order) {
       try {
-        // 获取订单详细信息
-        const response = await this.$axios.get(`/repair-orders/${order.id}`);
+        // 使用新的详细查询端点
+        const response = await this.$axios.get(`/repair-orders/${order.id}/details`);
         this.selectedOrderDetail = response.data;
+        console.log('订单详情:', this.selectedOrderDetail);
         this.showOrderDetailModal = true;
       } catch (error) {
         console.error('获取订单详情失败:', error);
-        this.$emit('message', '获取订单详情失败', 'error');
+        // 如果详细端点不可用，回退到基本查询
+        try {
+          const fallbackResponse = await this.$axios.get(`/repair-orders/${order.id}`);
+          this.selectedOrderDetail = fallbackResponse.data;
+          this.showOrderDetailModal = true;
+        } catch (fallbackError) {
+          console.error('获取订单详情失败（备用方案也失败）:', fallbackError);
+          this.$emit('message', '获取订单详情失败', 'error');
+        }
       }
     },
     closeOrderDetailModal() {
@@ -1821,172 +1872,6 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.tech-name {
-  font-weight: 600;
-  color: #1f2937;
-}
-
-.tech-skill {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.tech-rate {
-  color: #059669;
-  font-weight: 500;
-}
-
-/* 通用按钮样式 */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-decoration: none;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #2563eb;
-}
-
-.btn-outline {
-  background: transparent;
-  color: #3b82f6;
-  border: 1px solid #3b82f6;
-}
-
-.btn-outline:hover {
-  background: #3b82f6;
-  color: white;
-}
-
-.btn-danger {
-  background: #ef4444;
-  color: white;
-}
-
-.btn-danger:hover {
-  background: #dc2626;
-}
-
-.btn-sm {
-  padding: 0.375rem 0.75rem;
-  font-size: 0.75rem;
-}
-
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* 表单样式 */
-.form-input {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  transition: border-color 0.2s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.25rem;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-/* 订单详情模态框样式 */
-.order-detail-sections {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.detail-section {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-}
-
-.detail-section h3 {
-  margin: 0 0 1rem 0;
-  color: #1f2937;
-  font-size: 1rem;
-  font-weight: 600;
-  border-bottom: 2px solid #3b82f6;
-  padding-bottom: 0.5rem;
-}
-
-.detail-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 0.75rem;
-}
-
-.detail-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.detail-item label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.detail-item span {
-  font-size: 0.875rem;
-  color: #1f2937;
-}
-
-.total-cost {
-  font-weight: 700;
-  color: #059669;
-  font-size: 1rem !important;
-}
-
-.technician-item {
-  background: white;
-  padding: 0.75rem;
-  border-radius: 0.375rem;
-  border: 1px solid #d1d5db;
-  margin-bottom: 0.5rem;
-}
-
-.tech-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
 }
 
 .tech-name {
