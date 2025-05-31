@@ -18,43 +18,71 @@ public record RepairOrderResponse(
     Double laborCost,
     Double materialCost,
     Double totalCost,
-    Long userId,
-    String userName,
-    String userPhone,
-    String userEmail,
-    Long vehicleId,
-    String vehicleLicensePlate,
-    String vehicleBrand,
-    String vehicleModel,
-    List<Long> technicianIds,
-    List<String> technicianNames
+    UserInfo user,
+    VehicleInfo vehicle,
+    List<TechnicianInfo> technicians
 ) {
-    public RepairOrderResponse(RepairOrder order) {
+    public RepairOrderResponse(RepairOrder repairOrder) {
         this(
-            order.getId(),
-            order.getOrderNumber(),
-            order.getStatus(),
-            order.getDescription(),
-            order.getCreatedAt(),
-            order.getUpdatedAt(),
-            order.getCompletedAt(),
-            order.getLaborCost(),
-            order.getMaterialCost(),
-            order.getTotalCost(),
-            order.getUser() != null ? order.getUser().getId() : null,
-            order.getUser() != null ? order.getUser().getName() : null,
-            order.getUser() != null ? order.getUser().getPhone() : null,
-            order.getUser() != null ? order.getUser().getEmail() : null,
-            order.getVehicle() != null ? order.getVehicle().getId() : null,
-            order.getVehicle() != null ? order.getVehicle().getLicensePlate() : null,
-            order.getVehicle() != null ? order.getVehicle().getBrand() : null,
-            order.getVehicle() != null ? order.getVehicle().getModel() : null,
-            order.getTechnicians() != null ? 
-                order.getTechnicians().stream().map(t -> t.getId()).collect(Collectors.toList()) : 
-                List.of(),
-            order.getTechnicians() != null ? 
-                order.getTechnicians().stream().map(t -> t.getName()).collect(Collectors.toList()) : 
+            repairOrder.getId(),
+            repairOrder.getOrderNumber(),
+            repairOrder.getStatus(),
+            repairOrder.getDescription(),
+            repairOrder.getCreatedAt(),
+            repairOrder.getUpdatedAt(),
+            repairOrder.getCompletedAt(),
+            repairOrder.getLaborCost(),
+            repairOrder.getMaterialCost(),
+            repairOrder.getTotalCost(),
+            repairOrder.getUser() != null ? new UserInfo(
+                repairOrder.getUser().getId(),
+                repairOrder.getUser().getName(),
+                repairOrder.getUser().getUsername(),
+                repairOrder.getUser().getPhone(),
+                repairOrder.getUser().getEmail()
+            ) : null,
+            repairOrder.getVehicle() != null ? new VehicleInfo(
+                repairOrder.getVehicle().getId(),
+                repairOrder.getVehicle().getLicensePlate(),
+                repairOrder.getVehicle().getBrand(),
+                repairOrder.getVehicle().getModel(),
+                repairOrder.getVehicle().getYear()
+            ) : null,
+            repairOrder.getTechnicians() != null ? 
+                repairOrder.getTechnicians().stream()
+                    .map(tech -> new TechnicianInfo(
+                        tech.getId(),
+                        tech.getName(),
+                        tech.getEmployeeId(),
+                        tech.getSkillType(),
+                        tech.getHourlyRate()
+                    ))
+                    .collect(Collectors.toList()) : 
                 List.of()
         );
     }
-} 
+    
+    public static record UserInfo(
+        Long id,
+        String name,
+        String username,
+        String phone,
+        String email
+    ) {}
+    
+    public static record VehicleInfo(
+        Long id,
+        String licensePlate,
+        String brand,
+        String model,
+        Integer year
+    ) {}
+    
+    public static record TechnicianInfo(
+        Long id,
+        String name,
+        String employeeId,
+        org.com.repair.entity.Technician.SkillType skillType,
+        Double hourlyRate
+    ) {}
+}

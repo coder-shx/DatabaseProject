@@ -83,30 +83,42 @@ public interface TechnicianRepository extends JpaRepository<Technician, Long> {
     List<Object[]> countTechniciansBySkillType();
     
     /**
-     * 计算技师的历史工时费总收入
+     * 计算技师的历史工时费总收入（基于实际工作时间）
      * @param technicianId 技师ID
      * @return 总收入
      */
-    @Query(value = "SELECT SUM(r.labor_cost / " +
-                   "(SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id)) " +
+    @Query(value = "SELECT COALESCE(SUM(" +
+                   "CASE " +
+                   "  WHEN r.completed_at IS NOT NULL AND r.created_at IS NOT NULL " +
+                   "  THEN (TIMESTAMPDIFF(HOUR, r.created_at, r.completed_at) * t.hourly_rate) / " +
+                   "       (SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id) " +
+                   "  ELSE 0 " +
+                   "END), 0) " +
                    "FROM repair_order r " +
                    "JOIN order_technician ot ON r.id = ot.order_id " +
+                   "JOIN technician t ON ot.technician_id = t.id " +
                    "WHERE ot.technician_id = :technicianId " +
                    "AND r.status = 'COMPLETED'",
            nativeQuery = true)
     Double calculateTotalEarnings(@Param("technicianId") Long technicianId);
     
     /**
-     * 计算技师指定月份的收入
+     * 计算技师指定月份的收入（基于实际工作时间）
      * @param technicianId 技师ID
      * @param year 年份
      * @param month 月份
      * @return 月收入
      */
-    @Query(value = "SELECT COALESCE(SUM(r.labor_cost / " +
-                   "(SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id)), 0) " +
+    @Query(value = "SELECT COALESCE(SUM(" +
+                   "CASE " +
+                   "  WHEN r.completed_at IS NOT NULL AND r.created_at IS NOT NULL " +
+                   "  THEN (TIMESTAMPDIFF(HOUR, r.created_at, r.completed_at) * t.hourly_rate) / " +
+                   "       (SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id) " +
+                   "  ELSE 0 " +
+                   "END), 0) " +
                    "FROM repair_order r " +
                    "JOIN order_technician ot ON r.id = ot.order_id " +
+                   "JOIN technician t ON ot.technician_id = t.id " +
                    "WHERE ot.technician_id = :technicianId " +
                    "AND r.status = 'COMPLETED' " +
                    "AND YEAR(r.completed_at) = :year " +
@@ -135,4 +147,4 @@ public interface TechnicianRepository extends JpaRepository<Technician, Long> {
     @Transactional
     @Query(value = "DELETE FROM order_technician WHERE technician_id = :technicianId", nativeQuery = true)
     void removeFromAllOrders(@Param("technicianId") Long technicianId);
-} 
+}
