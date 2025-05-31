@@ -125,44 +125,19 @@ public interface RepairOrderRepository extends JpaRepository<RepairOrder, Long> 
     List<Object[]> findOrdersWithNegativeFeedback(@Param("maxRating") int maxRating);
     
     /**
-     * 根据ID查找维修工单（包含完整的用户、车辆、技师信息）
-     * @param id 工单ID
-     * @return 维修工单
-     */
-    @Query("SELECT DISTINCT r FROM RepairOrder r " +
-           "LEFT JOIN FETCH r.user " +
-           "LEFT JOIN FETCH r.vehicle " +
-           "LEFT JOIN FETCH r.technicians " +
-           "WHERE r.id = :id")
-    Optional<RepairOrder> findByIdWithAllDetails(@Param("id") Long id);
-    
-    /**
-     * 获取所有维修工单（包含用户、车辆、技师信息）
-     * @return 维修工单列表
-     */
-    @Query("SELECT DISTINCT r FROM RepairOrder r " +
-           "LEFT JOIN FETCH r.user " +
-           "LEFT JOIN FETCH r.vehicle " +
-           "LEFT JOIN FETCH r.technicians " +
-           "ORDER BY r.createdAt DESC")
-    List<RepairOrder> findAllWithDetails();
-    
-    /**
-     * 统计一段时间内，不同工种完成的任务数量及占比（基于实际工作时间）
+     * 统计一段时间内，不同工种完成的任务数量及占比
      * @param startDate 开始日期
      * @param endDate 结束日期
-     * @return 统计结果（工种、任务数量、占比、总工时）
+     * @return 统计结果（工种、任务数量、占比）
      */
     @Query(value = "SELECT t.skill_type, COUNT(r.id) as task_count, " +
-                   "COUNT(r.id) * 100.0 / (SELECT COUNT(*) FROM repair_order WHERE created_at BETWEEN :startDate AND :endDate) as percentage, " +
-                   "COALESCE(SUM(TIMESTAMPDIFF(HOUR, r.created_at, r.completed_at)), 0) as total_hours " +
+                   "COUNT(r.id) * 100.0 / (SELECT COUNT(*) FROM repair_order WHERE created_at BETWEEN :startDate AND :endDate) as percentage " +
                    "FROM repair_order r " +
                    "JOIN order_technician ot ON r.id = ot.order_id " +
                    "JOIN technician t ON ot.technician_id = t.id " +
                    "WHERE r.created_at BETWEEN :startDate AND :endDate " +
-                   "AND r.status = 'COMPLETED' " +
                    "GROUP BY t.skill_type " +
                    "ORDER BY task_count DESC",
            nativeQuery = true)
     List<Object[]> getTaskStatisticsBySkillType(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
-}
+} 

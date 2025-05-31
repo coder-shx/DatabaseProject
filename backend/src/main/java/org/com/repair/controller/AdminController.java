@@ -106,8 +106,8 @@ public class AdminController {
         try {
             Map<String, Object> stats = new HashMap<>();
             
-            // 获取真实的统计数据，使用带详情的查询避免懒加载问题
-            List<org.com.repair.DTO.RepairOrderResponse> allOrders = repairOrderService.getAllRepairOrdersWithDetails();
+            // 获取真实的统计数据
+            List<org.com.repair.DTO.RepairOrderResponse> allOrders = repairOrderService.getAllRepairOrders();
             List<org.com.repair.DTO.TechnicianResponse> allTechnicians = technicianService.getAllTechnicians();
             
             long totalOrders = allOrders.size();
@@ -117,7 +117,7 @@ public class AdminController {
             long completedOrders = allOrders.stream()
                 .filter(order -> org.com.repair.entity.RepairOrder.RepairStatus.COMPLETED.equals(order.status()))
                 .count();
-            long activeTechnicians = allTechnicians.size();
+            long activeTechnicians = allTechnicians.size(); // 假设所有技师都是活跃的
             
             stats.put("totalOrders", totalOrders);
             stats.put("pendingOrders", pendingOrders);
@@ -127,27 +127,19 @@ public class AdminController {
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             e.printStackTrace();
-            // 返回默认值避免前端错误
-            Map<String, Object> defaultStats = new HashMap<>();
-            defaultStats.put("totalOrders", 0);
-            defaultStats.put("pendingOrders", 0);
-            defaultStats.put("completedOrders", 0);
-            defaultStats.put("activeTechnicians", 0);
-            return ResponseEntity.ok(defaultStats);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     
-    @GetMapping("/detailed-statistics")
-    public ResponseEntity<Map<String, Object>> getDetailedStatistics(
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate) {
+    @GetMapping("/negative-feedback")
+    public ResponseEntity<List<Object[]>> getNegativeFeedback() {
         try {
-            Map<String, Object> statistics = repairOrderService.getDetailedStatistics(startDate, endDate);
-            return ResponseEntity.ok(statistics);
+            // 返回所有反馈，不再基于评分过滤
+            List<Object[]> feedback = repairOrderService.getOrdersWithNegativeFeedback(5); // 获取所有反馈
+            return ResponseEntity.ok(feedback);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "获取统计数据失败: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     
@@ -167,4 +159,4 @@ public class AdminController {
             this.message = message;
         }
     }
-}
+} 
