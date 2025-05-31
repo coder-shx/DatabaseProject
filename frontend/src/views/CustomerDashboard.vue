@@ -84,7 +84,7 @@
               <i class="fas fa-dollar-sign"></i>
             </div>
             <div class="stat-content">
-              <h3>¥{{ statistics.totalCost }}</h3>
+              <h3>¥{{ formatCurrency(statistics.totalCost) }}</h3>
               <p>总费用</p>
             </div>
           </div>
@@ -671,14 +671,25 @@ export default {
       this.statistics = {
         vehicleCount: this.vehicles.length,
         repairCount: this.repairOrders.length,
-        pendingCount: this.repairOrders.filter(order => order.status === 'PENDING' || order.status === 'IN_PROGRESS').length,
-        totalCost: this.repairOrders.reduce((sum, order) => sum + (order.actualCost || order.estimatedCost || 0), 0)
+        pendingCount: this.repairOrders.filter(order => 
+          order.status === 'PENDING' || order.status === 'IN_PROGRESS' || order.status === 'ASSIGNED'
+        ).length,
+        totalCost: this.formatCurrency(
+          this.repairOrders.reduce((sum, order) => 
+            sum + (order.totalCost || order.laborCost + order.materialCost || 0), 0
+          )
+        )
       };
       
       // 更新可反馈的维修单列表
       this.completedOrdersWithoutFeedback = this.repairOrders
         .filter(order => order.status === 'COMPLETED' && !this.hasUserFeedback(order));
     },
+    
+    formatCurrency(amount) {
+      return Math.round((amount || 0) * 100) / 100;
+    },
+    
     toggleUserMenu() {
       this.showUserMenu = !this.showUserMenu;
     },
