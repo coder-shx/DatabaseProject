@@ -368,8 +368,7 @@ export default {
           'technician': '/technician',
           'admin': '/admin'
         };
-
-        this.$router.push(roleRoutes[this.role] || '/');
+        await this.$router.push(roleRoutes[this.role] || '/');
       }
     },
     async handleRegister() {

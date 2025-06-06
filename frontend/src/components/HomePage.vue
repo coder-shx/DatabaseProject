@@ -396,7 +396,6 @@ export default {
         'technician': '/technician',
         'admin': '/admin'
       };
-
       this.$router.push(roleRoutes[userData.role] || '/');
     }
   }
