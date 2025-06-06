@@ -21,7 +21,7 @@
           <input
               v-model="formData.name"
               class="form-input"
-              placeholder="请输入您的真实姓名"
+              placeholder="请输入您的姓名"
               required
           >
         </div>
@@ -49,95 +49,6 @@
                 v-model="formData.address"
                 class="form-input"
                 placeholder="请输入联系地址"
-                required
-            >
-          </div>
-        </template>
-
-        <!-- 管理员注册字段 -->
-        <template v-if="!isLogin && role === 'admin'">
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-phone"></i>
-              电话号码
-            </label>
-            <input
-                v-model="formData.phone"
-                class="form-input"
-                placeholder="请输入手机号码"
-                required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-user-tag"></i>
-              管理员角色
-            </label>
-            <select v-model="formData.role" class="form-input" required>
-              <option value="">请选择管理员角色</option>
-              <option value="SUPER_ADMIN">超级管理员</option>
-              <option value="MANAGER">经理</option>
-              <option value="STAFF">员工</option>
-            </select>
-          </div>
-        </template>
-
-        <!-- 技师注册字段 -->
-        <template v-if="!isLogin && role === 'technician'">
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-id-badge"></i>
-              员工ID
-            </label>
-            <input
-                v-model="formData.employeeId"
-                class="form-input"
-                placeholder="请输入员工ID"
-                required
-            >
-            <div v-if="employeeIdError" class="field-error">
-              <i class="fas fa-exclamation-triangle"></i>
-              {{ employeeIdError }}
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-phone"></i>
-              电话号码
-            </label>
-            <input
-                v-model="formData.phone"
-                class="form-input"
-                placeholder="请输入手机号码"
-                required
-            >
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-cogs"></i>
-              技能类型
-            </label>
-            <select v-model="formData.skillType" class="form-input" required>
-              <option value="">请选择技能类型</option>
-              <option value="MECHANIC">机械维修</option>
-              <option value="ELECTRICIAN">电气维修</option>
-              <option value="BODY_WORK">车身维修</option>
-              <option value="PAINT">喷漆</option>
-              <option value="DIAGNOSTIC">诊断</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">
-              <i class="fas fa-dollar-sign"></i>
-              小时费率 (元)
-            </label>
-            <input
-                v-model="formData.hourlyRate"
-                class="form-input"
-                placeholder="请输入小时费率"
-                type="number"
-                step="0.01"
-                min="0"
                 required
             >
           </div>
@@ -187,7 +98,7 @@
       </form>
 
       <!-- 切换模式 -->
-      <div class="form-footer">
+      <div class="form-footer" v-if=" role === 'customer'">
         <p @click="toggleMode" class="mode-toggle">
           {{ isLogin ? '没有账号？点击注册' : '已有账号？点击登录' }}
           <i class="fas fa-exchange-alt"></i>
