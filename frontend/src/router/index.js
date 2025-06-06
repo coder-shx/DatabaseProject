@@ -1,18 +1,18 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import IdentitySelection from '../components/IdentitySelection.vue'
 import AuthForm from '../components/AuthForm.vue'
 import CustomerDashboard from '../views/CustomerDashboard.vue'
 import TechnicianDashboard from '../views/TechnicianDashboard.vue'
 import AdminDashboard from '../views/AdminDashboard.vue'
+import HomePage from "@/components/HomePage.vue";
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'IdentitySelection',
-    component: IdentitySelection
+    name: 'HomePage',
+    component: HomePage,
   },
   {
     path: '/auth/:role',

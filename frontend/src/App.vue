@@ -24,11 +24,7 @@
         @message="showMessage"
       />
     </transition>
-    
-    <!-- 页脚 -->
-    <footer class="app-footer">
-      <p>&copy; 2024 汽车维修管理系统. All rights reserved.</p>
-    </footer>
+
   </div>
 </template>
 

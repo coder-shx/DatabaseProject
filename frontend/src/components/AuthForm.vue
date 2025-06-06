@@ -3,9 +3,6 @@
     <div class="auth-form">
       <!-- 头部 -->
       <div class="form-header">
-        <button @click="goBack" class="back-btn">
-          <i class="fas fa-arrow-left"></i>
-        </button>
         <div class="role-info">
           <div class="role-icon">
             <i :class="roleConfig[role].icon"></i>
@@ -305,9 +302,6 @@ export default {
     }
   },
   methods: {
-    goBack() {
-      this.$router.push('/');
-    },
     toggleMode() {
       this.isLogin = !this.isLogin;
       this.clearErrors();
@@ -368,6 +362,14 @@ export default {
         localStorage.setItem('user', JSON.stringify(response.data));
         localStorage.setItem('userRole', this.role);
         this.$emit('auth-success', { ...response.data, role: this.role });
+        // 添加路由跳转逻辑
+        const roleRoutes = {
+          'customer': '/customer',
+          'technician': '/technician',
+          'admin': '/admin'
+        };
+
+        this.$router.push(roleRoutes[this.role] || '/');
       }
     },
     async handleRegister() {
@@ -458,79 +460,325 @@ export default {
 }
 </script>
 
+<!--<style scoped>-->
+<!--.auth-form-container {-->
+<!--  min-height: 100vh;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  padding: 20px;-->
+<!--  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);-->
+<!--}-->
+
+<!--.auth-form {-->
+<!--  width: 100%;-->
+<!--  max-width: 500px;-->
+<!--  background: white;-->
+<!--  border-radius: 20px;-->
+<!--  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);-->
+<!--  overflow: hidden;-->
+<!--}-->
+
+<!--.form-header {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  gap: 16px;-->
+<!--  padding: 30px 30px 20px;-->
+<!--  background: linear-gradient(135deg, #42b983, #369970);-->
+<!--  color: white;-->
+<!--}-->
+
+<!--.back-btn {-->
+<!--  background: rgba(255, 255, 255, 0.2);-->
+<!--  border: none;-->
+<!--  border-radius: 50%;-->
+<!--  width: 40px;-->
+<!--  height: 40px;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  color: white;-->
+<!--  cursor: pointer;-->
+<!--  transition: background-color 0.2s;-->
+<!--}-->
+
+<!--.back-btn:hover {-->
+<!--  background: rgba(255, 255, 255, 0.3);-->
+<!--}-->
+
+<!--.role-info {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  gap: 16px;-->
+<!--}-->
+
+<!--.role-icon {-->
+<!--  width: 50px;-->
+<!--  height: 50px;-->
+<!--  background: rgba(255, 255, 255, 0.2);-->
+<!--  border-radius: 50%;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  font-size: 1.5rem;-->
+<!--}-->
+
+<!--.role-info h2 {-->
+<!--  margin: 0;-->
+<!--  font-size: 1.5rem;-->
+<!--  font-weight: 600;-->
+<!--}-->
+
+<!--.role-info p {-->
+<!--  margin: 0;-->
+<!--  opacity: 0.9;-->
+<!--  font-size: 14px;-->
+<!--}-->
+
+<!--.form-content {-->
+<!--  padding: 30px;-->
+<!--}-->
+
+<!--.form-group {-->
+<!--  margin-bottom: 24px;-->
+<!--}-->
+
+<!--.form-label {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  gap: 8px;-->
+<!--  margin-bottom: 8px;-->
+<!--  font-weight: 500;-->
+<!--  color: #374151;-->
+<!--  font-size: 14px;-->
+<!--}-->
+
+<!--.form-input {-->
+<!--  width: 100%;-->
+<!--  padding: 14px 16px;-->
+<!--  border: 2px solid #e5e7eb;-->
+<!--  border-radius: 10px;-->
+<!--  font-size: 14px;-->
+<!--  transition: all 0.2s ease;-->
+<!--  background: #f9fafb;-->
+<!--}-->
+
+<!--.form-input:focus {-->
+<!--  outline: none;-->
+<!--  border-color: #42b983;-->
+<!--  box-shadow: 0 0 0 3px rgba(66, 185, 131, 0.1);-->
+<!--  background: white;-->
+<!--}-->
+
+<!--.password-input {-->
+<!--  position: relative;-->
+<!--}-->
+
+<!--.password-toggle {-->
+<!--  position: absolute;-->
+<!--  right: 12px;-->
+<!--  top: 50%;-->
+<!--  transform: translateY(-50%);-->
+<!--  background: none;-->
+<!--  border: none;-->
+<!--  color: #6b7280;-->
+<!--  cursor: pointer;-->
+<!--  padding: 4px;-->
+<!--  transition: color 0.2s;-->
+<!--}-->
+
+<!--.password-toggle:hover {-->
+<!--  color: #42b983;-->
+<!--}-->
+
+<!--.field-error {-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  gap: 6px;-->
+<!--  margin-top: 6px;-->
+<!--  color: #ef4444;-->
+<!--  font-size: 12px;-->
+<!--}-->
+
+<!--.submit-btn {-->
+<!--  width: 100%;-->
+<!--  padding: 16px 24px;-->
+<!--  background: linear-gradient(135deg, #42b983, #369970);-->
+<!--  color: white;-->
+<!--  border: none;-->
+<!--  border-radius: 12px;-->
+<!--  font-size: 16px;-->
+<!--  font-weight: 600;-->
+<!--  cursor: pointer;-->
+<!--  transition: all 0.3s ease;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  gap: 8px;-->
+<!--}-->
+
+<!--.submit-btn:hover:not(:disabled) {-->
+<!--  transform: translateY(-2px);-->
+<!--  box-shadow: 0 8px 20px rgba(66, 185, 131, 0.3);-->
+<!--}-->
+
+<!--.submit-btn:disabled {-->
+<!--  opacity: 0.7;-->
+<!--  cursor: not-allowed;-->
+<!--  transform: none;-->
+<!--}-->
+
+<!--.btn-spinner {-->
+<!--  width: 16px;-->
+<!--  height: 16px;-->
+<!--  border: 2px solid rgba(255, 255, 255, 0.3);-->
+<!--  border-top: 2px solid white;-->
+<!--  border-radius: 50%;-->
+<!--  animation: spin 1s linear infinite;-->
+<!--}-->
+
+<!--.form-footer {-->
+<!--  padding: 0 30px 30px;-->
+<!--  text-align: center;-->
+<!--}-->
+
+<!--.mode-toggle {-->
+<!--  color: #42b983;-->
+<!--  cursor: pointer;-->
+<!--  font-size: 14px;-->
+<!--  margin: 0;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  justify-content: center;-->
+<!--  gap: 8px;-->
+<!--  transition: color 0.2s;-->
+<!--}-->
+
+<!--.mode-toggle:hover {-->
+<!--  color: #369970;-->
+<!--}-->
+
+<!--.error-message {-->
+<!--  margin: 20px 30px;-->
+<!--  padding: 16px;-->
+<!--  background: #fef2f2;-->
+<!--  border: 1px solid #fecaca;-->
+<!--  border-radius: 10px;-->
+<!--  color: #dc2626;-->
+<!--  font-size: 14px;-->
+<!--  display: flex;-->
+<!--  align-items: center;-->
+<!--  gap: 8px;-->
+<!--}-->
+
+<!--.error-close {-->
+<!--  background: none;-->
+<!--  border: none;-->
+<!--  color: #dc2626;-->
+<!--  font-size: 18px;-->
+<!--  cursor: pointer;-->
+<!--  margin-left: auto;-->
+<!--  padding: 0;-->
+<!--}-->
+
+<!--.error-enter-active, .error-leave-active {-->
+<!--  transition: all 0.3s ease;-->
+<!--}-->
+
+<!--.error-enter {-->
+<!--  opacity: 0;-->
+<!--  transform: translateY(-10px);-->
+<!--}-->
+
+<!--.error-leave-to {-->
+<!--  opacity: 0;-->
+<!--  transform: translateY(-10px);-->
+<!--}-->
+
+<!--/* 响应式设计 */-->
+<!--@media (max-width: 640px) {-->
+<!--  .auth-form-container {-->
+<!--    padding: 10px;-->
+<!--  }-->
+<!--  -->
+<!--  .auth-form {-->
+<!--    max-width: 100%;-->
+<!--  }-->
+<!--  -->
+<!--  .form-header {-->
+<!--    padding: 20px 20px 15px;-->
+<!--  }-->
+<!--  -->
+<!--  .form-content {-->
+<!--    padding: 20px;-->
+<!--  }-->
+<!--  -->
+<!--  .form-footer {-->
+<!--    padding: 0 20px 20px;-->
+<!--  }-->
+<!--  -->
+<!--  .error-message {-->
+<!--    margin: 15px 20px;-->
+<!--  }-->
+<!--}-->
+
+<!--@keyframes spin {-->
+<!--  0% { transform: rotate(0deg); }-->
+<!--  100% { transform: rotate(360deg); }-->
+<!--}-->
+<!--</style>-->
+
+
+
 <style scoped>
 .auth-form-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  max-width: 500px;
   padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .auth-form {
-  width: 100%;
-  max-width: 500px;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   overflow: hidden;
 }
 
 .form-header {
-  display: flex;
-  align-items: center;
-  gap: 16px;
   padding: 30px 30px 20px;
   background: linear-gradient(135deg, #42b983, #369970);
   color: white;
-}
-
-.back-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.back-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  text-align: center;
 }
 
 .role-info {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 16px;
 }
 
 .role-icon {
-  width: 50px;
-  height: 50px;
+  width: 70px;
+  height: 70px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
 }
 
 .role-info h2 {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   font-weight: 600;
 }
 
 .role-info p {
   margin: 0;
   opacity: 0.9;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .form-content {
@@ -693,35 +941,22 @@ export default {
   transform: translateY(-10px);
 }
 
-/* 响应式设计 */
-@media (max-width: 640px) {
-  .auth-form-container {
-    padding: 10px;
-  }
-  
-  .auth-form {
-    max-width: 100%;
-  }
-  
-  .form-header {
-    padding: 20px 20px 15px;
-  }
-  
-  .form-content {
-    padding: 20px;
-  }
-  
-  .form-footer {
-    padding: 0 20px 20px;
-  }
-  
-  .error-message {
-    margin: 15px 20px;
-  }
-}
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .form-header {
+    padding: 25px 20px 15px;
+  }
+
+  .form-content {
+    padding: 20px;
+  }
+
+  .role-info h2 {
+    font-size: 1.6rem;
+  }
 }
 </style>
