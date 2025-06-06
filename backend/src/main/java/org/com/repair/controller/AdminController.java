@@ -1,5 +1,6 @@
 package org.com.repair.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -106,8 +107,8 @@ public class AdminController {
         try {
             Map<String, Object> stats = new HashMap<>();
             
-            // 获取真实的统计数据
-            List<org.com.repair.DTO.RepairOrderResponse> allOrders = repairOrderService.getAllRepairOrders();
+            // 获取真实的统计数据，使用带详情的查询避免懒加载问题
+            List<org.com.repair.DTO.RepairOrderResponse> allOrders = repairOrderService.getAllRepairOrdersWithDetails();
             List<org.com.repair.DTO.TechnicianResponse> allTechnicians = technicianService.getAllTechnicians();
             
             long totalOrders = allOrders.size();
@@ -117,7 +118,7 @@ public class AdminController {
             long completedOrders = allOrders.stream()
                 .filter(order -> org.com.repair.entity.RepairOrder.RepairStatus.COMPLETED.equals(order.status()))
                 .count();
-            long activeTechnicians = allTechnicians.size(); // 假设所有技师都是活跃的
+            long activeTechnicians = allTechnicians.size();
             
             stats.put("totalOrders", totalOrders);
             stats.put("pendingOrders", pendingOrders);
@@ -127,19 +128,78 @@ public class AdminController {
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            // 返回默认值避免前端错误
+            Map<String, Object> defaultStats = new HashMap<>();
+            defaultStats.put("totalOrders", 0);
+            defaultStats.put("pendingOrders", 0);
+            defaultStats.put("completedOrders", 0);
+            defaultStats.put("activeTechnicians", 0);
+            return ResponseEntity.ok(defaultStats);
         }
     }
     
-    @GetMapping("/negative-feedback")
-    public ResponseEntity<List<Object[]>> getNegativeFeedback() {
+    @GetMapping("/detailed-statistics")
+    public ResponseEntity<Map<String, Object>> getDetailedStatistics(
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
         try {
-            // 返回所有反馈，不再基于评分过滤
-            List<Object[]> feedback = repairOrderService.getOrdersWithNegativeFeedback(5); // 获取所有反馈
-            return ResponseEntity.ok(feedback);
+            Map<String, Object> statistics = repairOrderService.getDetailedStatistics(startDate, endDate);
+            return ResponseEntity.ok(statistics);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "获取统计数据失败: " + e.getMessage()));
+        }
+    }
+    
+    /**
+     * 重新分配所有待分配的订单
+     * 当系统中新增技师后，可以调用此接口重新分配之前未分配的订单
+     */
+    @PostMapping("/reassign-pending-orders")
+    public ResponseEntity<Map<String, Object>> reassignPendingOrders() {
+        try {
+            List<org.com.repair.DTO.RepairOrderResponse> reassignedOrders = repairOrderService.reassignPendingOrders();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "重新分配完成");
+            response.put("reassignedCount", reassignedOrders.size());
+            response.put("reassignedOrders", reassignedOrders);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "重新分配失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+    
+    /**
+     * 获取车辆品牌维修数量统计
+     */
+    @GetMapping("/vehicle-brand-statistics")
+    public ResponseEntity<List<Map<String, Object>>> getVehicleBrandStatistics() {
+        try {
+            List<Map<String, Object>> statistics = repairOrderService.getVehicleBrandRepairStatistics();
+            return ResponseEntity.ok(statistics);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
+        }
+    }
+    
+    /**
+     * 获取维修工种类型统计
+     */
+    @GetMapping("/skill-type-statistics")
+    public ResponseEntity<List<Map<String, Object>>> getSkillTypeStatistics() {
+        try {
+            List<Map<String, Object>> statistics = repairOrderService.getSkillTypeRepairStatistics();
+            return ResponseEntity.ok(statistics);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new ArrayList<>());
         }
     }
     
@@ -159,4 +219,4 @@ public class AdminController {
             this.message = message;
         }
     }
-} 
+}

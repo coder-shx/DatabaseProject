@@ -50,6 +50,10 @@ public class RepairOrder {
 
     @Column
     @Temporal(TemporalType.TIMESTAMP)
+    private Date startedAt;
+
+    @Column
+    @Temporal(TemporalType.TIMESTAMP)
     private Date completedAt;
 
     @Column
@@ -60,6 +64,20 @@ public class RepairOrder {
 
     @Column
     private Double totalCost;
+    
+    @Column
+    private Double estimatedHours;
+    
+    @Column
+    private Double actualHours;
+    
+    @Column
+    @Enumerated(EnumType.STRING)
+    private AssignmentType assignmentType = AssignmentType.AUTO;
+
+    @Column
+    @Enumerated(EnumType.STRING)
+    private org.com.repair.entity.Technician.SkillType requiredSkillType;
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
@@ -90,6 +108,10 @@ public class RepairOrder {
     // 枚举类型定义
     public enum RepairStatus {
         PENDING, ASSIGNED, IN_PROGRESS, COMPLETED, CANCELLED
+    }
+    
+    public enum AssignmentType {
+        AUTO, MANUAL
     }
 
     // 构造函数
@@ -145,6 +167,14 @@ public class RepairOrder {
         this.updatedAt = updatedAt;
     }
 
+    public Date getStartedAt() {
+        return startedAt;
+    }
+
+    public void setStartedAt(Date startedAt) {
+        this.startedAt = startedAt;
+    }
+
     public Date getCompletedAt() {
         return completedAt;
     }
@@ -175,6 +205,38 @@ public class RepairOrder {
 
     public void setTotalCost(Double totalCost) {
         this.totalCost = totalCost;
+    }
+    
+    public Double getEstimatedHours() {
+        return estimatedHours;
+    }
+    
+    public void setEstimatedHours(Double estimatedHours) {
+        this.estimatedHours = estimatedHours;
+    }
+    
+    public Double getActualHours() {
+        return actualHours;
+    }
+    
+    public void setActualHours(Double actualHours) {
+        this.actualHours = actualHours;
+    }
+    
+    public AssignmentType getAssignmentType() {
+        return assignmentType;
+    }
+    
+    public void setAssignmentType(AssignmentType assignmentType) {
+        this.assignmentType = assignmentType;
+    }
+
+    public org.com.repair.entity.Technician.SkillType getRequiredSkillType() {
+        return requiredSkillType;
+    }
+
+    public void setRequiredSkillType(org.com.repair.entity.Technician.SkillType requiredSkillType) {
+        this.requiredSkillType = requiredSkillType;
     }
 
     public User getUser() {
@@ -216,4 +278,4 @@ public class RepairOrder {
     public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
     }
-} 
+}

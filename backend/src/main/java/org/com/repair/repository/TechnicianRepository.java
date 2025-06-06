@@ -83,32 +83,34 @@ public interface TechnicianRepository extends JpaRepository<Technician, Long> {
     List<Object[]> countTechniciansBySkillType();
     
     /**
-     * 计算技师的历史工时费总收入
+     * 计算技师的历史工时费总收入（基于实际工作时间）
      * @param technicianId 技师ID
      * @return 总收入
      */
-    @Query(value = "SELECT SUM(r.labor_cost / " +
-                   "(SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id)) " +
+    @Query(value = "SELECT COALESCE(SUM(r.actual_hours * t.hourly_rate), 0) " +
                    "FROM repair_order r " +
                    "JOIN order_technician ot ON r.id = ot.order_id " +
+                   "JOIN technician t ON ot.technician_id = t.id " +
                    "WHERE ot.technician_id = :technicianId " +
-                   "AND r.status = 'COMPLETED'",
+                   "AND r.status = 'COMPLETED' " +
+                   "AND r.actual_hours IS NOT NULL",
            nativeQuery = true)
     Double calculateTotalEarnings(@Param("technicianId") Long technicianId);
     
     /**
-     * 计算技师指定月份的收入
+     * 计算技师指定月份的收入（基于实际工作时间）
      * @param technicianId 技师ID
      * @param year 年份
      * @param month 月份
      * @return 月收入
      */
-    @Query(value = "SELECT COALESCE(SUM(r.labor_cost / " +
-                   "(SELECT COUNT(*) FROM order_technician ot2 WHERE ot2.order_id = r.id)), 0) " +
+    @Query(value = "SELECT COALESCE(SUM(r.actual_hours * t.hourly_rate), 0) " +
                    "FROM repair_order r " +
                    "JOIN order_technician ot ON r.id = ot.order_id " +
+                   "JOIN technician t ON ot.technician_id = t.id " +
                    "WHERE ot.technician_id = :technicianId " +
                    "AND r.status = 'COMPLETED' " +
+                   "AND r.actual_hours IS NOT NULL " +
                    "AND YEAR(r.completed_at) = :year " +
                    "AND MONTH(r.completed_at) = :month",
            nativeQuery = true)
@@ -117,14 +119,16 @@ public interface TechnicianRepository extends JpaRepository<Technician, Long> {
                                    @Param("month") int month);
     
     /**
-     * 查找指定时间段内可用的技师列表（未分配满工单的技师）
+     * 查找指定时间段内可用的技师列表（按工作负载排序）
      * @param skillType 技能类型
      * @return 可用技师列表
      */
     @Query("SELECT t FROM Technician t " +
            "WHERE t.skillType = :skillType " +
-           "AND (SELECT COUNT(r) FROM t.repairOrders r WHERE r.status != 'COMPLETED' AND r.status != 'CANCELLED') < 5 " +
-           "ORDER BY (SELECT COUNT(r) FROM t.repairOrders r WHERE r.status != 'COMPLETED' AND r.status != 'CANCELLED')")
+           "ORDER BY " +
+           "(SELECT COUNT(r) FROM t.repairOrders r WHERE r.status != 'COMPLETED' AND r.status != 'CANCELLED'), " +
+           "t.hourlyRate, " +
+           "t.completedOrders DESC")
     List<Technician> findAvailableTechnicians(@Param("skillType") SkillType skillType);
     
     /**
@@ -135,4 +139,4 @@ public interface TechnicianRepository extends JpaRepository<Technician, Long> {
     @Transactional
     @Query(value = "DELETE FROM order_technician WHERE technician_id = :technicianId", nativeQuery = true)
     void removeFromAllOrders(@Param("technicianId") Long technicianId);
-} 
+}

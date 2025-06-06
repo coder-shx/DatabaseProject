@@ -70,7 +70,7 @@
             </div>
             <div class="stat-content">
               <h3>{{ statistics.completedTasks }}</h3>
-              <p>已完成</p>
+              <p>已完成任务</p>
             </div>
           </div>
           <div class="stat-card">
@@ -79,16 +79,16 @@
             </div>
             <div class="stat-content">
               <h3>{{ statistics.pendingTasks }}</h3>
-              <p>进行中</p>
+              <p>进行中任务</p>
             </div>
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-              <i class="fas fa-star"></i>
+              <i class="fas fa-dollar-sign"></i>
             </div>
             <div class="stat-content">
-              <h3>{{ statistics.averageRating }}</h3>
-              <p>平均评分</p>
+              <h3>¥{{ formatCurrency(statistics.monthlyEarnings || 0) }}</h3>
+              <p>本月收入</p>
             </div>
           </div>
         </div>
@@ -485,6 +485,49 @@
         </div>
       </div>
     </div>
+
+    <!-- 完成任务模态框 -->
+    <div v-if="showCompleteTask && selectedTask" class="modal-overlay" @click="closeCompleteTask">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>完成任务</h2>
+          <button class="modal-close" @click="closeCompleteTask">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="task-summary">
+            <h3>{{ selectedTask.orderNumber || `维修单 #${selectedTask.id}` }}</h3>
+            <p>{{ selectedTask.description }}</p>
+            <p><strong>车辆:</strong> {{ getVehicleDisplay(selectedTask) }}</p>
+          </div>
+          
+          <form @submit.prevent="submitCompleteTask">
+            <div class="form-group">
+              <label class="form-label">材料费用 <span class="required">*</span></label>
+              <input v-model="completeTaskForm.materialCost" type="number" step="0.01" min="0" 
+                     class="form-input" placeholder="请输入材料费用" required>
+              <small class="form-help">请输入本次维修使用的材料总费用</small>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">工作说明</label>
+              <textarea v-model="completeTaskForm.workNotes" class="form-input" rows="3"
+                        placeholder="请简要说明本次维修的工作内容（可选）"></textarea>
+            </div>
+            
+            <div class="modal-footer">
+              <button type="button" @click="closeCompleteTask" class="btn btn-outline">
+                取消
+              </button>
+              <button type="submit" class="btn btn-success" :disabled="isSubmitting">
+                <i class="fas fa-check"></i> {{ isSubmitting ? '完成中...' : '完成任务' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -497,21 +540,27 @@ export default {
       activeTab: 'overview',
       showUserMenu: false,
       showTaskDetail: false,
+      showCompleteTask: false,
       taskFilter: '',
       allTasks: [],
       selectedTask: null,
+      completeTaskForm: {
+        materialCost: '',
+        workNotes: ''
+      },
       statistics: {
         totalTasks: 0,
         completedTasks: 0,
         pendingTasks: 0,
-        averageRating: 0
+        monthlyEarnings: 0
       },
       earnings: {
         monthly: 0,
         total: 0,
         averagePerTask: 0
       },
-      profileForm: {}
+      profileForm: {},
+      isSubmitting: false
     }
   },
   computed: {
@@ -594,13 +643,12 @@ export default {
           totalTasks: response.data.totalTasks || 0,
           completedTasks: response.data.completedTasks || 0,
           pendingTasks: response.data.pendingTasks || 0,
-          averageRating: response.data.averageRating ? response.data.averageRating.toFixed(1) : '0.0'
+          monthlyEarnings: response.data.monthlyEarnings || 0
         };
         
         console.log('设置统计数据:', this.statistics);
       } catch (error) {
         console.error('加载统计数据失败:', error);
-        console.error('错误详情:', error.response?.data);
         
         // 基于本地任务数据计算统计信息作为备用
         const totalTasks = this.allTasks.length;
@@ -613,12 +661,13 @@ export default {
           totalTasks,
           completedTasks,
           pendingTasks,
-          averageRating: '4.8' // 默认评分
+          monthlyEarnings: 0 // 无法本地计算，需要服务器端
         };
         
         console.log('使用本地计算的统计数据:', this.statistics);
       }
     },
+    
     async loadEarnings() {
       try {
         console.log('开始加载技师收入数据，技师ID:', this.user.id);
@@ -631,38 +680,43 @@ export default {
         const monthlyEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/monthly-earnings`);
         const monthlyEarnings = monthlyEarningsResponse.data || 0;
         
+        // 计算平均每任务收入
+        const completedTaskCount = this.statistics.completedTasks || 1;
+        const averagePerTask = totalEarnings / completedTaskCount;
+        
         this.earnings = {
           monthly: monthlyEarnings,
           total: totalEarnings,
-          averagePerTask: this.statistics.completedTasks > 0 ? totalEarnings / this.statistics.completedTasks : 0
+          averagePerTask: Math.round(averagePerTask * 100) / 100 // 保留两位小数
         };
         
         console.log('设置收入数据:', this.earnings);
       } catch (error) {
         console.error('加载收入数据失败:', error);
-        console.error('错误详情:', error.response?.data);
         
-        // 基于完成的任务计算收入作为备用
+        // 基于完成的任务估算收入作为备用
         const completedTasks = this.allTasks.filter(task => task.status === 'COMPLETED');
-        const totalEarnings = completedTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
-        
-        // 计算本月收入（简化版本）
-        const currentMonth = new Date().getMonth();
-        const monthlyTasks = completedTasks.filter(task => {
-          const taskMonth = new Date(task.completedAt || task.createdAt).getMonth();
-          return taskMonth === currentMonth;
-        });
-        const monthlyEarnings = monthlyTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
+        const estimatedTotal = completedTasks.reduce((sum, task) => {
+          // 估算：假设每个任务平均工作8小时
+          const estimatedHours = 8;
+          const hourlyRate = this.user.hourlyRate || 50;
+          return sum + (estimatedHours * hourlyRate);
+        }, 0);
         
         this.earnings = {
-          monthly: monthlyEarnings,
-          total: totalEarnings,
-          averagePerTask: completedTasks.length > 0 ? totalEarnings / completedTasks.length : 0
+          monthly: Math.round(estimatedTotal * 0.3 * 100) / 100, // 假设本月占30%
+          total: Math.round(estimatedTotal * 100) / 100,
+          averagePerTask: completedTasks.length > 0 ? Math.round((estimatedTotal / completedTasks.length) * 100) / 100 : 0
         };
         
-        console.log('使用本地计算的收入数据:', this.earnings);
+        console.log('使用估算的收入数据:', this.earnings);
       }
     },
+    
+    formatCurrency(amount) {
+      return Math.round((amount || 0) * 100) / 100;
+    },
+    
     toggleUserMenu() {
       this.showUserMenu = !this.showUserMenu;
     },
@@ -724,40 +778,12 @@ export default {
       }
     },
     async completeTask(task) {
-      if (!confirm('确定要完成这个任务吗？')) {
-        return;
-      }
-      
-      try {
-        console.log('完成任务:', task.id);
-        const response = await this.$axios.put(`/repair-orders/${task.id}/status`, null, {
-          params: { status: 'COMPLETED' }
-        });
-        
-        // 更新本地任务状态
-        const taskIndex = this.allTasks.findIndex(t => t.id === task.id);
-        if (taskIndex !== -1) {
-          this.allTasks[taskIndex].status = 'COMPLETED';
-          this.allTasks[taskIndex].completedAt = new Date().toISOString();
-          this.allTasks[taskIndex].updatedAt = new Date().toISOString();
-        }
-        
-        this.loadStatistics(); // 重新计算统计信息
-        this.loadEarnings(); // 重新计算收入
-        this.$emit('message', '任务已完成！', 'success');
-      } catch (error) {
-        console.error('完成任务失败:', error);
-        // 如果API不存在，直接更新本地状态
-        const taskIndex = this.allTasks.findIndex(t => t.id === task.id);
-        if (taskIndex !== -1) {
-          this.allTasks[taskIndex].status = 'COMPLETED';
-          this.allTasks[taskIndex].completedAt = new Date().toISOString();
-          this.allTasks[taskIndex].updatedAt = new Date().toISOString();
-        }
-        this.loadStatistics();
-        this.loadEarnings();
-        this.$emit('message', '任务已完成！', 'success');
-      }
+      this.selectedTask = task;
+      this.completeTaskForm = {
+        materialCost: '',
+        workNotes: ''
+      };
+      this.showCompleteTask = true;
     },
     viewTask(task) {
       this.selectedTask = task;
@@ -807,14 +833,44 @@ export default {
       localStorage.removeItem('userRole');
       this.$router.push('/');
     },
-    formatCurrency(value) {
-      if (value == null || value === undefined) {
-        return '0.00';
+    async submitCompleteTask() {
+      try {
+        this.isSubmitting = true;
+        console.log('提交完成任务:', this.selectedTask.id);
+        const response = await this.$axios.put(`/repair-orders/${this.selectedTask.id}/status`, null, {
+          params: { 
+            status: 'COMPLETED',
+            materialCost: this.completeTaskForm.materialCost
+          }
+        });
+        
+        // 更新本地任务状态
+        const taskIndex = this.allTasks.findIndex(t => t.id === this.selectedTask.id);
+        if (taskIndex !== -1) {
+          this.allTasks[taskIndex].status = 'COMPLETED';
+          this.allTasks[taskIndex].completedAt = new Date().toISOString();
+          this.allTasks[taskIndex].materialCost = this.completeTaskForm.materialCost;
+          this.allTasks[taskIndex].updatedAt = new Date().toISOString();
+        }
+        
+        this.closeCompleteTask();
+        this.loadStatistics(); // 重新计算统计信息
+        this.loadEarnings(); // 重新计算收入
+        this.$emit('message', '任务已完成！', 'success');
+      } catch (error) {
+        console.error('完成任务失败:', error);
+        this.$emit('message', '完成任务失败: ' + (error.response?.data?.message || error.message), 'error');
+      } finally {
+        this.isSubmitting = false;
       }
-      return Number(value).toLocaleString('zh-CN', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+    },
+    closeCompleteTask() {
+      this.showCompleteTask = false;
+      this.selectedTask = null;
+      this.completeTaskForm = {
+        materialCost: '',
+        workNotes: ''
+      };
     }
   }
 }

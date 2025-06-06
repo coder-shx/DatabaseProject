@@ -2,9 +2,11 @@ package org.com.repair.controller;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.com.repair.DTO.NewRepairOrderRequest;
 import org.com.repair.DTO.RepairOrderResponse;
+import org.com.repair.entity.RepairOrder;
 import org.com.repair.entity.RepairOrder.RepairStatus;
 import org.com.repair.service.RepairOrderService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -84,11 +86,12 @@ public class RepairOrderController {
     }
     
     @PutMapping("/{id}/status")
-    public ResponseEntity<RepairOrderResponse> updateRepairOrderStatus(
+    public ResponseEntity<RepairOrderResponse> updateOrderStatus(
             @PathVariable Long id, 
-            @RequestParam RepairStatus status) {
+            @RequestParam RepairOrder.RepairStatus status,
+            @RequestParam(required = false) Double materialCost) {
         try {
-            RepairOrderResponse response = repairOrderService.updateRepairOrderStatus(id, status);
+            RepairOrderResponse response = repairOrderService.updateRepairOrderStatus(id, status, materialCost);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (RuntimeException e) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -143,4 +146,27 @@ public class RepairOrderController {
         List<Object[]> statistics = repairOrderService.getTaskStatisticsBySkillType(startDate, endDate);
         return new ResponseEntity<>(statistics, HttpStatus.OK);
     }
-} 
+    
+    @PutMapping("/{id}/reassign")
+    public ResponseEntity<RepairOrderResponse> reassignTechnicians(
+            @PathVariable Long id,
+            @RequestBody Set<Long> technicianIds,
+            @RequestParam(defaultValue = "true") boolean isManual) {
+        try {
+            RepairOrderResponse response = repairOrderService.reassignTechnicians(id, technicianIds, isManual);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+    
+    @PutMapping("/{id}/auto-reassign")
+    public ResponseEntity<RepairOrderResponse> autoReassignTechnicians(@PathVariable Long id) {
+        try {
+            RepairOrderResponse response = repairOrderService.autoReassignTechnicians(id);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+    }
+}
