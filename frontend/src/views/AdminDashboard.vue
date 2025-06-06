@@ -60,7 +60,7 @@
             </div>
             <button class="btn btn-outline" @click="refreshData" :disabled="isLoading">
               <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
-              {{ isLoading ? '刷新中...' : '刷新数据' }}
+              {{ isLoading ? 'loading...' : '刷新数据' }}
             </button>
           </div>
         </div>
@@ -138,32 +138,32 @@
           <div class="orders-table">
             <table>
               <thead>
-                <tr>
-                  <th>订单号</th>
-                  <th>客户</th>
-                  <th>车辆</th>
-                  <th>状态</th>
-                  <th>创建时间</th>
-                  <th>操作</th>
-                </tr>
+              <tr>
+                <th>订单号</th>
+                <th>客户</th>
+                <th>车辆</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>操作</th>
+              </tr>
               </thead>
               <tbody>
-                <tr v-for="order in recentOrders" :key="order.id">
-                  <td>{{ order.orderNumber }}</td>
-                  <td>{{ order.user?.name || '未知' }}</td>
-                  <td>{{ getVehicleDisplay(order) }}</td>
-                  <td>
+              <tr v-for="order in recentOrders" :key="order.id">
+                <td>{{ order.orderNumber }}</td>
+                <td>{{ order.user?.name || '未知' }}</td>
+                <td>{{ getVehicleDisplay(order) }}</td>
+                <td>
                     <span :class="['status-badge', order.status.toLowerCase()]">
                       {{ getStatusText(order.status) }}
                     </span>
-                  </td>
-                  <td>{{ formatDate(order.createdAt) }}</td>
-                  <td>
-                    <button class="btn btn-sm btn-primary" @click="viewOrderDetail(order)">
-                      查看
-                    </button>
-                  </td>
-                </tr>
+                </td>
+                <td>{{ formatDate(order.createdAt) }}</td>
+                <td>
+                  <button class="btn btn-sm btn-primary" @click="viewOrderDetail(order)">
+                    查看
+                  </button>
+                </td>
+              </tr>
               </tbody>
             </table>
           </div>
@@ -183,7 +183,7 @@
               <option value="COMPLETED">已完成</option>
             </select>
             <button class="btn btn-secondary" @click="manualReassignPendingOrders" :disabled="isLoading">
-              <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i> 
+              <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
               {{ isLoading ? '分配中...' : '重新分配' }}
             </button>
           </div>
@@ -269,29 +269,22 @@
               <p class="tech-id">员工ID: {{ technician.employeeId }}</p>
               <div class="tech-details">
                 <div class="detail-item">
-                  <i class="fas fa-cogs"></i>
-                  <span>{{ getSkillTypeName(technician.skillType) }}</span>
+                  <span>工种：{{ getSkillTypeName(technician.skillType) }}</span>
                 </div>
                 <div class="detail-item">
-                  <i class="fas fa-dollar-sign"></i>
                   <span>¥{{ technician.hourlyRate }}/小时</span>
                 </div>
                 <div class="detail-item">
-                  <i class="fas fa-phone"></i>
-                  <span>{{ technician.phone }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="fas fa-envelope"></i>
-                  <span>{{ technician.email }}</span>
+                  <span>电话：{{ technician.phone }}</span>
                 </div>
               </div>
             </div>
             <div class="tech-actions">
               <button class="btn btn-outline btn-sm" @click="editTechnician(technician)">
-                <i class="fas fa-edit"></i> 编辑
+            编辑
               </button>
               <button class="btn btn-danger btn-sm" @click="deleteTechnician(technician)">
-                <i class="fas fa-trash"></i> 删除
+                 删除
               </button>
             </div>
           </div>
@@ -318,64 +311,64 @@
             <!-- 收入构成图表 -->
             <div class="chart-card">
               <Chart
-                title="收入构成分析"
-                type="pie"
-                :data="revenueChartData"
-                :size="200"
+                  title="收入构成分析"
+                  type="pie"
+                  :data="revenueChartData"
+                  :size="200"
               />
             </div>
 
             <!-- 技师任务数量图表 -->
             <div class="chart-card">
               <Chart
-                title="技师完成任务数量"
-                type="bar"
-                :data="technicianTasksChartData"
-                :width="400"
-                :height="300"
+                  title="技师完成任务数量"
+                  type="bar"
+                  :data="technicianTasksChartData"
+                  :width="400"
+                  :height="300"
               />
             </div>
 
             <!-- 技师收入图表 -->
             <div class="chart-card">
               <Chart
-                title="技师收入统计"
-                type="bar"
-                :data="technicianEarningsChartData"
-                :width="400"
-                :height="300"
+                  title="技师收入统计"
+                  type="bar"
+                  :data="technicianEarningsChartData"
+                  :width="400"
+                  :height="300"
               />
             </div>
 
             <!-- 订单状态分布 -->
             <div class="chart-card">
               <Chart
-                title="订单状态分布"
-                type="pie"
-                :data="orderStatusChartData"
-                :size="200"
+                  title="订单状态分布"
+                  type="pie"
+                  :data="orderStatusChartData"
+                  :size="200"
               />
             </div>
-            
+
             <!-- 车辆品牌维修统计 -->
             <div class="chart-card">
               <Chart
-                title="车辆品牌维修统计"
-                type="bar"
-                :data="vehicleBrandChartData"
-                :width="400"
-                :height="300"
+                  title="车辆品牌维修统计"
+                  type="bar"
+                  :data="vehicleBrandChartData"
+                  :width="400"
+                  :height="300"
               />
             </div>
-            
+
             <!-- 维修工种类型统计 -->
             <div class="chart-card">
               <Chart
-                title="维修工种类型统计"
-                type="bar"
-                :data="skillTypeChartData"
-                :width="400"
-                :height="300"
+                  title="维修工种类型统计"
+                  type="bar"
+                  :data="skillTypeChartData"
+                  :width="400"
+                  :height="300"
               />
             </div>
           </div>
@@ -386,20 +379,20 @@
             <div class="technician-stats">
               <table>
                 <thead>
-                  <tr>
-                    <th>技师</th>
-                    <th>技能类型</th>
-                    <th>完成任务数</th>
-                    <th>总收入</th>
-                  </tr>
+                <tr>
+                  <th>技师</th>
+                  <th>技能类型</th>
+                  <th>完成任务数</th>
+                  <th>总收入</th>
+                </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="stat in statistics.technicianStats" :key="stat.technicianId">
-                    <td>{{ stat.technicianName }}</td>
-                    <td>{{ getSkillTypeName(stat.skillType) }}</td>
-                    <td>{{ stat.completedTasks }}</td>
-                    <td>¥{{ stat.totalEarnings }}</td>
-                  </tr>
+                <tr v-for="stat in statistics.technicianStats" :key="stat.technicianId">
+                  <td>{{ stat.technicianName }}</td>
+                  <td>{{ getSkillTypeName(stat.skillType) }}</td>
+                  <td>{{ stat.completedTasks }}</td>
+                  <td>¥{{ stat.totalEarnings }}</td>
+                </tr>
                 </tbody>
               </table>
             </div>
@@ -412,30 +405,30 @@
               <div v-if="statistics.allFeedback && statistics.allFeedback.length > 0">
                 <table>
                   <thead>
-                    <tr>
-                      <th>订单号</th>
-                      <th>评分</th>
-                      <th>反馈内容</th>
-                      <th>用户</th>
-                      <th>日期</th>
-                    </tr>
+                  <tr>
+                    <th>订单号</th>
+                    <th>评分</th>
+                    <th>反馈内容</th>
+                    <th>用户</th>
+                    <th>日期</th>
+                  </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="feedback in statistics.allFeedback.slice(0, 10)" :key="feedback.id">
-                      <td>{{ feedback.repairOrder?.orderNumber || '未知' }}</td>
-                      <td>
-                        <div class="rating-stars">
-                          <span v-for="star in 5" :key="star" 
+                  <tr v-for="feedback in statistics.allFeedback.slice(0, 10)" :key="feedback.id">
+                    <td>{{ feedback.repairOrder?.orderNumber || '未知' }}</td>
+                    <td>
+                      <div class="rating-stars">
+                          <span v-for="star in 5" :key="star"
                                 :class="star <= feedback.rating ? 'star active' : 'star'">
                             ★
                           </span>
-                          <span class="rating-text">({{ feedback.rating }}分)</span>
-                        </div>
-                      </td>
-                      <td class="feedback-comment">{{ feedback.comment }}</td>
-                      <td>{{ feedback.user?.name || '未知用户' }}</td>
-                      <td>{{ formatDate(feedback.createdAt) }}</td>
-                    </tr>
+                        <span class="rating-text">({{ feedback.rating }}分)</span>
+                      </div>
+                    </td>
+                    <td class="feedback-comment">{{ feedback.comment }}</td>
+                    <td>{{ feedback.user?.name || '未知用户' }}</td>
+                    <td>{{ formatDate(feedback.createdAt) }}</td>
+                  </tr>
                   </tbody>
                 </table>
                 <div v-if="statistics.allFeedback.length > 10" class="feedback-pagination">
@@ -448,7 +441,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 车辆品牌维修统计详细数据 -->
           <div class="stat-section">
             <h3>车辆品牌维修数量排行</h3>
@@ -456,20 +449,20 @@
               <div v-if="statistics.vehicleBrandStats && statistics.vehicleBrandStats.length > 0">
                 <table>
                   <thead>
-                    <tr>
-                      <th>排名</th>
-                      <th>车辆品牌</th>
-                      <th>维修次数</th>
-                      <th>占比</th>
-                    </tr>
+                  <tr>
+                    <th>排名</th>
+                    <th>车辆品牌</th>
+                    <th>维修次数</th>
+                    <th>占比</th>
+                  </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(stat, index) in statistics.vehicleBrandStats" :key="stat.brand">
-                      <td>{{ index + 1 }}</td>
-                      <td>{{ stat.brand }}</td>
-                      <td>{{ stat.repairCount }}</td>
-                      <td>{{ ((stat.repairCount / allOrders.length) * 100).toFixed(1) }}%</td>
-                    </tr>
+                  <tr v-for="(stat, index) in statistics.vehicleBrandStats" :key="stat.brand">
+                    <td>{{ index + 1 }}</td>
+                    <td>{{ stat.brand }}</td>
+                    <td>{{ stat.repairCount }}</td>
+                    <td>{{ ((stat.repairCount / allOrders.length) * 100).toFixed(1) }}%</td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -479,7 +472,7 @@
               </div>
             </div>
           </div>
-          
+
           <!-- 维修工种类型统计详细数据 -->
           <div class="stat-section">
             <h3>维修工种类型需求统计</h3>
@@ -487,20 +480,20 @@
               <div v-if="statistics.skillTypeStats && statistics.skillTypeStats.length > 0">
                 <table>
                   <thead>
-                    <tr>
-                      <th>排名</th>
-                      <th>工种类型</th>
-                      <th>订单数量</th>
-                      <th>占比</th>
-                    </tr>
+                  <tr>
+                    <th>排名</th>
+                    <th>工种类型</th>
+                    <th>订单数量</th>
+                    <th>占比</th>
+                  </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="(stat, index) in statistics.skillTypeStats" :key="stat.skillType">
-                      <td>{{ index + 1 }}</td>
-                      <td>{{ stat.skillType }}</td>
-                      <td>{{ stat.orderCount }}</td>
-                      <td>{{ ((stat.orderCount / allOrders.length) * 100).toFixed(1) }}%</td>
-                    </tr>
+                  <tr v-for="(stat, index) in statistics.skillTypeStats" :key="stat.skillType">
+                    <td>{{ index + 1 }}</td>
+                    <td>{{ stat.skillType }}</td>
+                    <td>{{ stat.orderCount }}</td>
+                    <td>{{ ((stat.orderCount / allOrders.length) * 100).toFixed(1) }}%</td>
+                  </tr>
                   </tbody>
                 </table>
               </div>
@@ -528,32 +521,32 @@
         <div class="users-container">
           <table class="users-table">
             <thead>
-              <tr>
-                <th>ID</th>
-                <th>用户名</th>
-                <th>姓名</th>
-                <th>电话</th>
-                <th>邮箱</th>
-                <th>车辆数</th>
-                <th>订单数</th>
-                <th>操作</th>
-              </tr>
+            <tr>
+              <th>ID</th>
+              <th>用户名</th>
+              <th>姓名</th>
+              <th>电话</th>
+              <th>邮箱</th>
+              <th>车辆数</th>
+              <th>订单数</th>
+              <th>操作</th>
+            </tr>
             </thead>
             <tbody>
-              <tr v-for="user in filteredUsers" :key="user.id">
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.name }}</td>
-                <td>{{ user.phone }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.vehicleCount || 0 }}</td>
-                <td>{{ user.orderCount || 0 }}</td>
-                <td>
-                  <button class="btn btn-outline btn-sm" @click="viewUserDetail(user)">
-                    查看
-                  </button>
-                </td>
-              </tr>
+            <tr v-for="user in filteredUsers" :key="user.id">
+              <td>{{ user.id }}</td>
+              <td>{{ user.username }}</td>
+              <td>{{ user.name }}</td>
+              <td>{{ user.phone }}</td>
+              <td>{{ user.email }}</td>
+              <td>{{ user.vehicleCount || 0 }}</td>
+              <td>{{ user.orderCount || 0 }}</td>
+              <td>
+                <button class="btn btn-outline btn-sm" @click="viewUserDetail(user)">
+                  查看
+                </button>
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
@@ -602,7 +595,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="detail-section">
               <h3>客户信息</h3>
               <div class="detail-grid">
@@ -620,7 +613,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="detail-section">
               <h3>车辆信息</h3>
               <div class="detail-grid">
@@ -642,7 +635,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div v-if="selectedOrderDetail.technicians && selectedOrderDetail.technicians.length > 0" class="detail-section">
               <h3>分配技师</h3>
               <div class="technician-list">
@@ -655,7 +648,7 @@
                 </div>
               </div>
             </div>
-            
+
             <div class="detail-section">
               <h3>费用信息</h3>
               <div class="detail-grid">
@@ -673,7 +666,7 @@
                 </div>
               </div>
             </div>
-            
+
 
           </div>
         </div>
@@ -766,9 +759,9 @@ export default {
     },
     filteredUsers() {
       if (!this.userSearchTerm) return this.users;
-      return this.users.filter(user => 
-        user.name.toLowerCase().includes(this.userSearchTerm.toLowerCase()) ||
-        user.username.toLowerCase().includes(this.userSearchTerm.toLowerCase())
+      return this.users.filter(user =>
+          user.name.toLowerCase().includes(this.userSearchTerm.toLowerCase()) ||
+          user.username.toLowerCase().includes(this.userSearchTerm.toLowerCase())
       );
     },
     recentOrders() {
@@ -787,11 +780,11 @@ export default {
     revenueChartData() {
       const laborCost = this.statistics.laborCost || 0;
       const materialCost = this.statistics.materialCost || 0;
-      
+
       if (laborCost === 0 && materialCost === 0) {
         return [{ label: '暂无数据', value: 1 }];
       }
-      
+
       return [
         { label: '工时费', value: laborCost },
         { label: '材料费', value: materialCost }
@@ -801,7 +794,7 @@ export default {
       if (!this.statistics.technicianStats || this.statistics.technicianStats.length === 0) {
         return [{ label: '暂无数据', value: 0 }];
       }
-      
+
       return this.statistics.technicianStats.map(tech => ({
         label: tech.technicianName,
         value: tech.completedTasks
@@ -811,7 +804,7 @@ export default {
       if (!this.statistics.technicianStats || this.statistics.technicianStats.length === 0) {
         return [{ label: '暂无数据', value: 0 }];
       }
-      
+
       return this.statistics.technicianStats.map(tech => ({
         label: tech.technicianName,
         value: tech.totalEarnings
@@ -825,20 +818,20 @@ export default {
         COMPLETED: 0,
         CANCELLED: 0
       };
-      
+
       this.allOrders.forEach(order => {
         if (statusCounts.hasOwnProperty(order.status)) {
           statusCounts[order.status]++;
         }
       });
-      
+
       const data = Object.entries(statusCounts)
-        .filter(([status, count]) => count > 0)
-        .map(([status, count]) => ({
-          label: this.getStatusText(status),
-          value: count
-        }));
-      
+          .filter(([status, count]) => count > 0)
+          .map(([status, count]) => ({
+            label: this.getStatusText(status),
+            value: count
+          }));
+
       return data.length > 0 ? data : [{ label: '暂无数据', value: 1 }];
     },
     // 车辆品牌维修统计图表数据
@@ -846,7 +839,7 @@ export default {
       if (!this.statistics.vehicleBrandStats || this.statistics.vehicleBrandStats.length === 0) {
         return [{ label: '暂无数据', value: 0 }];
       }
-      
+
       return this.statistics.vehicleBrandStats.map(stat => ({
         label: stat.brand,
         value: stat.repairCount
@@ -857,7 +850,7 @@ export default {
       if (!this.statistics.skillTypeStats || this.statistics.skillTypeStats.length === 0) {
         return [{ label: '暂无数据', value: 0 }];
       }
-      
+
       return this.statistics.skillTypeStats.map(stat => ({
         label: stat.skillType,
         value: stat.orderCount
@@ -874,7 +867,7 @@ export default {
       if (userData) {
         this.user = JSON.parse(userData);
         console.log('加载的管理员数据:', this.user);
-        
+
         if (!this.user.id) {
           console.error('管理员数据中缺少ID字段:', this.user);
           this.$emit('message', '用户数据错误，请重新登录', 'error');
@@ -889,18 +882,18 @@ export default {
     async loadData() {
       try {
         this.isLoading = true;
-        
+
         // 先加载基础数据
         await this.loadOrders();
         await this.loadTechnicians();
-        
+
         if (this.isSuperAdmin) {
           await this.loadUsers();
         }
-        
+
         // 然后基于基础数据计算统计信息
         await this.loadDashboardStats();
-        
+
         // 如果是超级管理员，初始化统计分析数据
         if (this.isSuperAdmin) {
           this.calculateLocalStatistics();
@@ -912,19 +905,19 @@ export default {
         this.isLoading = false;
       }
     },
-    
+
     async refreshData() {
       this.$emit('message', '正在刷新数据...', 'info');
       this.isLoading = true;
       try {
         await this.loadData();
-        
+
         // 尝试重新分配待分配的订单
         await this.reassignPendingOrders();
-        
+
         // 重新分配后再次加载数据以反映最新状态
         await this.loadOrders();
-        
+
         // 强制重新计算统计数据
         await this.loadDashboardStats();
         if (this.isSuperAdmin) {
@@ -986,7 +979,7 @@ export default {
         // 基于本地数据计算统计信息
         const orders = Array.isArray(this.allOrders) ? this.allOrders : [];
         const techs = Array.isArray(this.technicians) ? this.technicians : [];
-        
+
         this.dashboardStats = {
           totalOrders: orders.length,
           pendingOrders: orders.filter(o => o.status === 'PENDING').length,
@@ -997,7 +990,7 @@ export default {
     },
     async loadDetailedStatistics() {
       if (!this.isSuperAdmin) return;
-      
+
       try {
         const params = {};
         if (this.statisticsDateRange.start) {
@@ -1006,7 +999,7 @@ export default {
         if (this.statisticsDateRange.end) {
           params.endDate = this.statisticsDateRange.end;
         }
-        
+
         const response = await this.$axios.get('/admins/detailed-statistics', { params });
         this.statistics = response.data;
         console.log('加载详细统计数据成功:', this.statistics);
@@ -1015,10 +1008,10 @@ export default {
         this.calculateLocalStatistics();
       }
     },
-    
+
     async loadStatistics() {
       if (!this.isSuperAdmin) return;
-      
+
       try {
         // 尝试从API加载各种统计数据
         const [revenueStats, techStats, feedbackStats] = await Promise.all([
@@ -1026,14 +1019,14 @@ export default {
             params: { year: 2024, month: 12 }
           }).catch(() => null),
           this.$axios.get('/repair-orders/task-statistics', {
-            params: { 
+            params: {
               startDate: this.statisticsDateRange.start,
               endDate: this.statisticsDateRange.end
             }
           }).catch(() => null),
           this.$axios.get('/feedbacks').catch(() => null)
         ]);
-        
+
         // 如果API调用失败，基于本地数据计算统计信息
         if (!revenueStats || !techStats || !feedbackStats) {
           this.calculateLocalStatistics();
@@ -1041,7 +1034,7 @@ export default {
           // 获取新的统计数据
           await this.loadVehicleBrandStatistics();
           await this.loadSkillTypeStatistics();
-          
+
           this.statistics = {
             totalRevenue: revenueStats.data?.total_cost || 0,
             laborCost: revenueStats.data?.total_labor_cost || 0,
@@ -1058,7 +1051,7 @@ export default {
         this.calculateLocalStatistics();
       }
     },
-    
+
     async calculateLocalStatistics() {
       // 确保数据已初始化
       if (!Array.isArray(this.allOrders)) {
@@ -1067,21 +1060,21 @@ export default {
       if (!Array.isArray(this.technicians)) {
         this.technicians = [];
       }
-      
+
       // 基于本地订单数据计算统计信息
       const completedOrders = this.allOrders.filter(o => o.status === 'COMPLETED');
-      
+
       // 计算收入统计
       const totalRevenue = completedOrders.reduce((sum, order) => sum + (order.totalCost || 0), 0);
       const laborCost = completedOrders.reduce((sum, order) => sum + (order.laborCost || 0), 0);
       const materialCost = completedOrders.reduce((sum, order) => sum + (order.materialCost || 0), 0);
-      
+
       // 计算技师统计
       const technicianStats = this.technicians.map(tech => {
-        const techOrders = completedOrders.filter(order => 
-          order.technicians && order.technicians.some(t => t.id === tech.id)
+        const techOrders = completedOrders.filter(order =>
+            order.technicians && order.technicians.some(t => t.id === tech.id)
         );
-        
+
         return {
           technicianId: tech.id,
           technicianName: tech.name,
@@ -1090,14 +1083,14 @@ export default {
           totalEarnings: techOrders.reduce((sum, order) => sum + (order.laborCost || 0), 0)
         };
       });
-      
+
       // 获取真实的反馈数据
       await this.loadAllFeedback();
-      
+
       // 加载新的统计数据
       await this.loadVehicleBrandStatistics();
       await this.loadSkillTypeStatistics();
-      
+
       this.statistics = {
         totalRevenue,
         laborCost,
@@ -1109,7 +1102,7 @@ export default {
         monthlyRevenue: this.statistics.monthlyRevenue || []
       };
     },
-    
+
     async loadAllFeedback() {
       try {
         const response = await this.$axios.get('/feedbacks');
@@ -1222,11 +1215,11 @@ export default {
     async reassignPendingOrders() {
       try {
         const response = await this.$axios.post('/admins/reassign-pending-orders');
-        
+
         if (response.data.reassignedCount > 0) {
-          this.$emit('message', 
-            `成功重新分配 ${response.data.reassignedCount} 个订单`, 
-            'success'
+          this.$emit('message',
+              `成功重新分配 ${response.data.reassignedCount} 个订单`,
+              'success'
           );
           console.log('重新分配的订单:', response.data.reassignedOrders);
         } else {
@@ -1242,16 +1235,16 @@ export default {
       try {
         this.isLoading = true;
         this.$emit('message', '正在重新分配待分配订单...', 'info');
-        
+
         const response = await this.$axios.post('/admins/reassign-pending-orders');
-        
+
         if (response.data.reassignedCount > 0) {
-          this.$emit('message', 
-            `成功重新分配 ${response.data.reassignedCount} 个订单`, 
-            'success'
+          this.$emit('message',
+              `成功重新分配 ${response.data.reassignedCount} 个订单`,
+              'success'
           );
           console.log('重新分配的订单:', response.data.reassignedOrders);
-          
+
           // 重新加载订单数据以反映最新状态
           await this.loadOrders();
           await this.loadDashboardStats();
@@ -2086,55 +2079,55 @@ export default {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .header-left {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .nav-menu {
     overflow-x: auto;
   }
-  
+
   .dashboard-main {
     padding: 1rem;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .action-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .section-header {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
   }
-  
+
   .order-info {
     grid-template-columns: 1fr;
   }
-  
+
   .tech-details {
     grid-template-columns: 1fr;
   }
-  
+
   .revenue-stats {
     grid-template-columns: 1fr;
   }
-  
+
   .modal-content {
     margin: 1rem;
     max-height: calc(100vh - 2rem);
   }
-  
+
   .modal-footer {
     flex-direction: column;
   }
-  
+
   .welcome-content {
     flex-direction: column;
     gap: 1rem;

@@ -369,7 +369,7 @@
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">小时费率</label>
+              <label class="form-label">时薪</label>
               <input v-model="profileForm.hourlyRate" type="number" step="0.01" class="form-input" required>
             </div>
             <button type="submit" class="btn btn-primary">
