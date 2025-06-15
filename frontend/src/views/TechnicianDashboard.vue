@@ -1,33 +1,12 @@
 <template>
   <div class="technician-dashboard">
-    <!-- 顶部导航栏 -->
-    <header class="dashboard-header">
-      <div class="header-left">
-        <div class="logo">
-          <i class="fas fa-tools"></i>
-          <span>技师工作台</span>
+    <aside class="sidebar">
+      <div class="sidebar-user">
+        <div class="user-avatar">
+          <i class="fas fa-user-hard-hat"></i>
         </div>
-        <nav class="nav-menu">
-          <a href="#" @click="activeTab = 'overview'" :class="{ active: activeTab === 'overview' }">
-            <i class="fas fa-home"></i> 概览
-          </a>
-          <a href="#" @click="activeTab = 'tasks'" :class="{ active: activeTab === 'tasks' }">
-            <i class="fas fa-tasks"></i> 我的任务
-          </a>
-          <a href="#" @click="activeTab = 'history'" :class="{ active: activeTab === 'history' }">
-            <i class="fas fa-history"></i> 工作历史
-          </a>
-          <a href="#" @click="activeTab = 'earnings'" :class="{ active: activeTab === 'earnings' }">
-            <i class="fas fa-dollar-sign"></i> 收入统计
-          </a>
-        </nav>
-      </div>
-      <div class="header-right">
-        <div class="user-menu" @click="toggleUserMenu">
-          <div class="user-avatar">
-            <i class="fas fa-user-hard-hat"></i>
-          </div>
-          <span class="user-name">{{ user.name || user.username }}</span>
+        <span class="user-name">{{ user.name || user.username }}</span>
+        <div class="user-dropdown-btn" @click="toggleUserMenu">
           <i class="fas fa-chevron-down"></i>
         </div>
         <div v-if="showUserMenu" class="user-dropdown">
@@ -39,9 +18,21 @@
           </a>
         </div>
       </div>
-    </header>
-
-    <!-- 主内容区域 -->
+      <nav class="nav-menu">
+        <a href="#" @click="activeTab = 'overview'" :class="{ active: activeTab === 'overview' }">
+          <i class="fas fa-home"></i> 概览
+        </a>
+        <a href="#" @click="activeTab = 'tasks'" :class="{ active: activeTab === 'tasks' }">
+          <i class="fas fa-tasks"></i> 我的任务
+        </a>
+        <a href="#" @click="activeTab = 'history'" :class="{ active: activeTab === 'history' }">
+          <i class="fas fa-history"></i> 工作历史
+        </a>
+        <a href="#" @click="activeTab = 'earnings'" :class="{ active: activeTab === 'earnings' }">
+          <i class="fas fa-dollar-sign"></i> 收入统计
+        </a>
+      </nav>
+    </aside>
     <main class="dashboard-main">
       <!-- 概览页面 -->
       <div v-if="activeTab === 'overview'" class="tab-content">
@@ -922,117 +913,83 @@ export default {
 
 <style scoped>
 .technician-dashboard {
+  display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #f4f7fa;
 }
-
-.dashboard-header {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 0 2rem;
+.sidebar {
+  width: 220px;
+  background: linear-gradient(180deg, #1e293b 80%, #2563eb 100%);
+  color: #fff;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  box-shadow: 2px 0 8px rgba(30,41,59,0.08);
 }
-
-.header-left {
+.sidebar-user {
+  margin-top: 0;
+  padding: 1.5rem 1rem 1rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
   display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #f59e0b;
+  background: inherit;
 }
-
+.user-avatar {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+.user-name {
+  font-weight: bold;
+}
+.user-dropdown-btn {
+  margin-top: 0.5rem;
+  cursor: pointer;
+}
+.user-dropdown {
+  background: #fff;
+  color: #222;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  width: 100%;
+}
+.user-dropdown a {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #222;
+  text-decoration: none;
+  border-radius: 0.5rem;
+}
+.user-dropdown a:hover {
+  background: #f1f5f9;
+}
 .nav-menu {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
-
 .nav-menu a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem 0 0 0.5rem;
   text-decoration: none;
-  color: #6b7280;
-  transition: color 0.2s;
-  border-bottom: 3px solid transparent;
+  font-size: 1.1rem;
+  transition: background 0.2s;
 }
-
-.nav-menu a:hover,
-.nav-menu a.active {
-  color: #f59e0b;
-  border-bottom-color: #f59e0b;
+.nav-menu a.active, .nav-menu a:hover {
+  background: #2563eb;
+  color: #fff;
 }
-
-.header-right {
-  position: relative;
-}
-
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.user-menu:hover {
-  background: #f3f4f6;
-}
-
-.user-avatar {
-  width: 2rem;
-  height: 2rem;
-  background: #f59e0b;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  min-width: 200px;
-  z-index: 1000;
-}
-
-.user-dropdown a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  color: #374151;
-  transition: background-color 0.2s;
-}
-
-.user-dropdown a:hover {
-  background: #f3f4f6;
-}
-
 .dashboard-main {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  flex: 1;
+  padding: 2rem 2.5rem;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
 .tab-content {

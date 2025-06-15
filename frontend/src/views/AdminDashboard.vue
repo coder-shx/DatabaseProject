@@ -1,37 +1,13 @@
 <template>
   <div class="admin-dashboard">
-    <!-- 顶部导航栏 -->
-    <header class="dashboard-header">
-      <div class="header-left">
-        <div class="logo">
-          <i class="fas fa-shield-alt"></i>
-          <span>管理员控制台</span>
+    <aside class="sidebar">
+      <div class="sidebar-user">
+        <div class="user-avatar">
+          <i class="fas fa-user-shield"></i>
         </div>
-        <nav class="nav-menu">
-          <a href="#" @click="activeTab = 'overview'" :class="{ active: activeTab === 'overview' }">
-            <i class="fas fa-home"></i> 概览
-          </a>
-          <a v-if="isManager || isSuperAdmin" href="#" @click="activeTab = 'orders'" :class="{ active: activeTab === 'orders' }">
-            <i class="fas fa-clipboard-list"></i> 订单管理
-          </a>
-          <a v-if="isManager || isSuperAdmin" href="#" @click="activeTab = 'technicians'" :class="{ active: activeTab === 'technicians' }">
-            <i class="fas fa-users-cog"></i> 技师管理
-          </a>
-          <a v-if="isSuperAdmin" href="#" @click="activeTab = 'statistics'" :class="{ active: activeTab === 'statistics' }">
-            <i class="fas fa-chart-bar"></i> 统计分析
-          </a>
-          <a v-if="isSuperAdmin" href="#" @click="activeTab = 'users'" :class="{ active: activeTab === 'users' }">
-            <i class="fas fa-users"></i> 用户管理
-          </a>
-        </nav>
-      </div>
-      <div class="header-right">
-        <div class="user-menu" @click="toggleUserMenu">
-          <div class="user-avatar">
-            <i class="fas fa-user-shield"></i>
-          </div>
-          <span class="user-name">{{ user.name || user.username }}</span>
-          <span class="user-role">{{ getRoleName(user.role) }}</span>
+        <span class="user-name">{{ user.name || user.username }}</span>
+        <span class="user-role">{{ getRoleName(user.role) }}</span>
+        <div class="user-dropdown-btn" @click="toggleUserMenu">
           <i class="fas fa-chevron-down"></i>
         </div>
         <div v-if="showUserMenu" class="user-dropdown">
@@ -43,9 +19,24 @@
           </a>
         </div>
       </div>
-    </header>
-
-    <!-- 主内容区域 -->
+      <nav class="nav-menu">
+        <a href="#" @click="activeTab = 'overview'" :class="{ active: activeTab === 'overview' }">
+          <i class="fas fa-home"></i> 概览
+        </a>
+        <a v-if="isManager || isSuperAdmin" href="#" @click="activeTab = 'orders'" :class="{ active: activeTab === 'orders' }">
+          <i class="fas fa-clipboard-list"></i> 订单管理
+        </a>
+        <a v-if="isManager || isSuperAdmin" href="#" @click="activeTab = 'technicians'" :class="{ active: activeTab === 'technicians' }">
+          <i class="fas fa-users-cog"></i> 技师管理
+        </a>
+        <a v-if="isSuperAdmin" href="#" @click="activeTab = 'statistics'" :class="{ active: activeTab === 'statistics' }">
+          <i class="fas fa-chart-bar"></i> 统计分析
+        </a>
+        <a v-if="isSuperAdmin" href="#" @click="activeTab = 'users'" :class="{ active: activeTab === 'users' }">
+          <i class="fas fa-users"></i> 用户管理
+        </a>
+      </nav>
+    </aside>
     <main class="dashboard-main">
       <!-- 概览页面 -->
       <div v-if="activeTab === 'overview'" class="tab-content">
@@ -78,11 +69,11 @@
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-              <i class="fas fa-clock"></i>
+              <i class="fas fa-users-cog"></i>
             </div>
             <div class="stat-content">
-              <h3>{{ dashboardStats.pendingOrders }}</h3>
-              <p>待处理订单</p>
+              <h3>{{ dashboardStats.activeTechnicians }}</h3>
+              <p>活跃技师</p>
             </div>
           </div>
           <div class="stat-card">
@@ -101,33 +92,6 @@
             <div class="stat-content">
               <h3>{{ dashboardStats.activeTechnicians }}</h3>
               <p>活跃技师</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 快速操作 -->
-        <div class="quick-actions">
-          <h2>快速操作</h2>
-          <div class="action-grid">
-            <div v-if="isManager || isSuperAdmin" class="action-card" @click="activeTab = 'orders'">
-              <i class="fas fa-plus-circle"></i>
-              <h3>分配订单</h3>
-              <p>为新订单分配技师和定价</p>
-            </div>
-            <div v-if="isManager || isSuperAdmin" class="action-card" @click="activeTab = 'technicians'">
-              <i class="fas fa-user-plus"></i>
-              <h3>管理技师</h3>
-              <p>添加或编辑技师信息</p>
-            </div>
-            <div v-if="isSuperAdmin" class="action-card" @click="activeTab = 'statistics'">
-              <i class="fas fa-chart-line"></i>
-              <h3>查看报表</h3>
-              <p>查看详细统计分析</p>
-            </div>
-            <div v-if="isSuperAdmin" class="action-card" @click="activeTab = 'users'">
-              <i class="fas fa-users"></i>
-              <h3>用户管理</h3>
-              <p>管理系统用户</p>
             </div>
           </div>
         </div>
@@ -1304,138 +1268,103 @@ export default {
 </script>
 
 <style scoped>
-/* 这里包含所有的CSS样式，与之前的技师页面类似但使用蓝色主题 */
 .admin-dashboard {
+  display: flex;
   min-height: 100vh;
-  background: #f8fafc;
+  background: #f4f7fa;
 }
 
-.dashboard-header {
-  background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  padding: 0 2rem;
+.sidebar {
+  width: 220px;
+  background: linear-gradient(180deg, #1e293b 80%, #2563eb 100%);
+  color: #fff;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  box-shadow: 2px 0 8px rgba(30,41,59,0.08);
 }
 
-.header-left {
+.sidebar-user {
+  margin-top: auto;
+  padding: 1.5rem 1rem 1rem 1rem;
+  border-top: 1px solid rgba(255,255,255,0.1);
   display: flex;
-  align-items: center;
-  gap: 2rem;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #3b82f6;
+}
+
+.user-avatar {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.user-name {
+  font-weight: bold;
+}
+
+.user-role {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.user-dropdown-btn {
+  margin-top: 0.5rem;
+  cursor: pointer;
+}
+
+.user-dropdown {
+  background: #fff;
+  color: #222;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-top: 0.5rem;
+  padding: 0.5rem 0;
+  width: 100%;
+}
+
+.user-dropdown a {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #222;
+  text-decoration: none;
+  border-radius: 0.5rem;
+}
+
+.user-dropdown a:hover {
+  background: #f1f5f9;
 }
 
 .nav-menu {
   display: flex;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .nav-menu a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 1rem;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem 0 0 0.5rem;
   text-decoration: none;
-  color: #6b7280;
-  transition: color 0.2s;
-  border-bottom: 3px solid transparent;
+  font-size: 1.1rem;
+  transition: background 0.2s;
 }
 
-.nav-menu a:hover,
-.nav-menu a.active {
-  color: #3b82f6;
-  border-bottom-color: #3b82f6;
-}
-
-.header-right {
-  position: relative;
-}
-
-.user-menu {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  cursor: pointer;
-  border-radius: 0.5rem;
-  transition: background-color 0.2s;
-}
-
-.user-menu:hover {
-  background: #f3f4f6;
-}
-
-.user-avatar {
-  width: 2rem;
-  height: 2rem;
-  background: #3b82f6;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-}
-
-.user-role {
-  font-size: 0.75rem;
-  color: #6b7280;
-  background: #f3f4f6;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-  min-width: 200px;
-  z-index: 1000;
-}
-
-.user-dropdown a {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  text-decoration: none;
-  color: #374151;
-  transition: background-color 0.2s;
-}
-
-.user-dropdown a:hover {
-  background: #f3f4f6;
+.nav-menu a.active, .nav-menu a:hover {
+  background: #2563eb;
+  color: #fff;
 }
 
 .dashboard-main {
-  padding: 2rem;
-  max-width: 1400px;
-  margin: 0 auto;
+  flex: 1;
+  padding: 2rem 2.5rem;
+  background: #f8fafc;
+  min-height: 100vh;
 }
 
-.tab-content {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
+/* 这里包含所有的CSS样式，与之前的技师页面类似但使用蓝色主题 */
 .welcome-section {
   margin-bottom: 2rem;
 }
@@ -1500,53 +1429,6 @@ export default {
 }
 
 .stat-content p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.quick-actions {
-  margin-bottom: 2rem;
-}
-
-.quick-actions h2 {
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.action-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.action-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  text-align: center;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.action-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-}
-
-.action-card i {
-  font-size: 2rem;
-  color: #3b82f6;
-  margin-bottom: 1rem;
-}
-
-.action-card h3 {
-  margin: 0 0 0.5rem 0;
-  color: #1f2937;
-}
-
-.action-card p {
   margin: 0;
   color: #6b7280;
   font-size: 0.875rem;
