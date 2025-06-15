@@ -54,10 +54,6 @@
                 <div class="overview-card-title">已完成订单</div>
                 <div class="overview-card-value">{{ dashboardStats.completedOrders }}</div>
               </div>
-              <div class="overview-card">
-                <div class="overview-card-title">活跃技师</div>
-                <div class="overview-card-value">{{ dashboardStats.activeTechnicians }}</div>
-              </div>
             </div>
             <button class="btn btn-outline refresh-btn" @click="refreshData" :disabled="isLoading">
               <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
