@@ -36,103 +36,19 @@
     <main class="dashboard-main">
       <!-- 概览页面 -->
       <div v-if="activeTab === 'overview'" class="tab-content">
-        <div class="welcome-section">
-          <h1>欢迎回来，{{ user.name || user.username }}技师！</h1>
-          <div class="skill-badge">
-            <i class="fas fa-award"></i>
-            <span>{{ getSkillTypeName(user.skillType) }}</span>
-          </div>
-        </div>
-
-        <!-- 统计卡片 -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-              <i class="fas fa-tasks"></i>
+        <div class="overview-simple">
+          <h2>欢迎回来，{{ user.name || user.username }} 技师！</h2>
+          <div class="overview-stats">
+            <div>
+              <strong>总任务数：</strong> {{ statistics.totalTasks }}
             </div>
-            <div class="stat-content">
-              <h3>{{ statistics.totalTasks }}</h3>
-              <p>总任务数</p>
+            <div>
+              <strong>已完成任务：</strong> {{ statistics.completedTasks }}
+            </div>
+            <div>
+              <strong>进行中任务：</strong> {{ statistics.pendingTasks }}
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ statistics.completedTasks }}</h3>
-              <p>已完成任务</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ statistics.pendingTasks }}</h3>
-              <p>进行中任务</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 待处理任务 -->
-        <div class="pending-tasks">
-          <h2>待处理任务</h2>
-          <div class="task-list">
-            <div v-if="pendingTasks.length === 0" class="empty-state">
-              <i class="fas fa-check-circle"></i>
-              <p>暂无待处理任务</p>
-            </div>
-            <div v-for="task in pendingTasks.slice(0, 5)" :key="task.id" class="task-item">
-              <div class="task-info">
-                <h4>{{ task.orderNumber || `维修单 #${task.id}` }}</h4>
-                <p>{{ task.description }}</p>
-                <div class="task-meta">
-                  <span class="task-date">
-                    <i class="fas fa-calendar"></i>
-                    {{ formatDate(task.createdAt) }}
-                  </span>
-                  <span class="task-vehicle">
-                    <i class="fas fa-car"></i>
-                    {{ getVehicleDisplay(task) }}
-                  </span>
-                  <span class="task-customer">
-                    <i class="fas fa-user"></i>
-                    {{ task.user ? task.user.name : '未知客户' }}
-                  </span>
-                </div>
-              </div>
-              <div class="task-actions">
-                <template v-if="task.status === 'ASSIGNED'">
-                  <button class="btn btn-success" @click="startTask(task)">
-                    <i class="fas fa-play"></i>
-                    开始维修
-                  </button>
-                  <button class="btn btn-danger" @click="rejectTask(task)">
-                    <i class="fas fa-times"></i>
-                    拒绝订单
-                  </button>
-                </template>
-                <template v-else-if="task.status === 'IN_PROGRESS'">
-                  <button class="btn btn-primary" @click="openCompleteTaskDialog(task)">
-                    <i class="fas fa-check"></i>
-                    完成维修
-                  </button>
-                </template>
-                <!-- 显示催单提醒 -->
-                <div v-if="task.urgeCount > 0" class="urge-reminder">
-                  <i class="fas fa-bell"></i>
-                  {{ task.urgeCount>0 ?"客户已催单":"客户未催单" }}<br>
-                  <span v-if="task.lastUrgedAt" class="urge-time">
-                    最近催单时间：{{ formatDate(task.lastUrgedAt) }}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <button v-if="pendingTasks.length > 5" class="btn btn-outline" @click="activeTab = 'tasks'">
-            查看全部任务
-          </button>
         </div>
       </div>
 
@@ -515,6 +431,15 @@ export default {
   created() {
     this.loadUserInfo();
     this.loadData();
+    // 定时自动刷新数据
+    this._refreshTimer = setInterval(() => {
+      this.loadData();
+    }, 30000); // 30秒刷新一次
+  },
+  beforeDestroy() {
+    if (this._refreshTimer) {
+      clearInterval(this._refreshTimer);
+    }
   },
   methods: {
     loadUserInfo() {

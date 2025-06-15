@@ -33,10 +33,19 @@
     <main class="dashboard-main">
       <!-- 概览页面 -->
       <div v-if="activeTab === 'overview'" class="tab-content">
-        <div>
-          <h2>我的车辆数：{{ statistics.vehicleCount }}</h2>
-          <h2>维修次数：{{ statistics.repairCount }}</h2>
-          <h2>待处理：{{ statistics.pendingCount }}</h2>
+        <div class="overview-simple">
+          <h2>欢迎，{{ user.name || user.username }}！</h2>
+          <div class="overview-stats">
+            <div>
+              <strong>我的车辆：</strong> {{ statistics.vehicleCount }}
+            </div>
+            <div>
+              <strong>维修次数：</strong> {{ statistics.repairCount }}
+            </div>
+            <div>
+              <strong>待处理：</strong> {{ statistics.pendingCount }}
+            </div>
+          </div>
         </div>
       </div>
           
@@ -494,6 +503,15 @@ export default {
   created() {
     this.loadUserInfo();
     this.loadData();
+    // 定时自动刷新数据
+    this._refreshTimer = setInterval(() => {
+      this.loadData();
+    }, 30000); // 30秒刷新一次
+  },
+  beforeDestroy() {
+    if (this._refreshTimer) {
+      clearInterval(this._refreshTimer);
+    }
   },
   methods: {
     loadUserInfo() {
@@ -1313,10 +1331,6 @@ export default {
 .form-help i {
   color: #3b82f6;
   margin-right: 0.25rem;
-}
-
-.btn {
-  /* Add any necessary styles for the btn class */
 }
 
 .detail-section {

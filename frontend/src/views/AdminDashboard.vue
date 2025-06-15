@@ -35,409 +35,452 @@
       </nav>
     </aside>
     <main class="dashboard-main">
-      <!-- 概览页面 -->
-      <div v-if="activeTab === 'overview'" class="tab-content">
-        <div class="welcome-section">
-          <div class="welcome-content">
-            <div>
-              <h1>欢迎，{{ user.name || user.username }}！</h1>
-              <div class="role-badge">
-                <i class="fas fa-crown"></i>
-                <span>{{ getRoleName(user.role) }}</span>
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">管理后台</h1>
+        <div class="dashboard-userinfo">
+          <span class="dashboard-username"><i class="fas fa-user"></i> {{ user.name || user.username }}</span>
+          <span class="dashboard-role">({{ getRoleName(user.role) }})</span>
+        </div>
+      </div>
+      <div class="dashboard-content">
+        <transition name="fade" mode="out-in">
+          <div v-if="activeTab === 'overview'" key="overview" class="tab-content overview-tab">
+            <div class="overview-cards">
+              <div class="overview-card">
+                <div class="overview-card-title">总订单数</div>
+                <div class="overview-card-value">{{ dashboardStats.totalOrders }}</div>
+              </div>
+              <div class="overview-card">
+                <div class="overview-card-title">已完成订单</div>
+                <div class="overview-card-value">{{ dashboardStats.completedOrders }}</div>
+              </div>
+              <div class="overview-card">
+                <div class="overview-card-title">活跃技师</div>
+                <div class="overview-card-value">{{ dashboardStats.activeTechnicians }}</div>
               </div>
             </div>
-            <button class="btn btn-outline" @click="refreshData" :disabled="isLoading">
+            <button class="btn btn-outline refresh-btn" @click="refreshData" :disabled="isLoading">
               <i class="fas fa-sync-alt" :class="{ 'fa-spin': isLoading }"></i>
               {{ isLoading ? 'loading...' : '刷新数据' }}
             </button>
           </div>
-        </div>
-</div>
-        <!-- 统计卡片 -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">
-              <i class="fas fa-clipboard-list"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ dashboardStats.totalOrders }}</h3>
-              <p>总订单数</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-              <i class="fas fa-check-circle"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ dashboardStats.completedOrders }}</h3>
-              <p>已完成订单</p>
-            </div>
-          </div>
-        </div>
-      <!-- 订单管理页面 -->
-      <div v-if="activeTab === 'orders'" class="tab-content">
-        <div class="section-header">
-          <h2>订单管理</h2>
-          <div class="order-filters">
-            <select v-model="orderFilter" class="form-input">
-              <option value="">全部状态</option>
-              <option value="PENDING">待处理</option>
-              <option value="ASSIGNED">已分配</option>
-              <option value="IN_PROGRESS">进行中</option>
-              <option value="COMPLETED">已完成</option>
-              <option value="CANCELLED">已取消</option>
-              <option value="REJECTED">已拒绝</option>
-            </select>
+          <!-- 其它tab内容... -->
+          <div v-else-if="activeTab === 'orders'" key="orders" class="tab-content">
+            <div class="section-header">
+              <h2>订单管理</h2>
+              <div class="order-filters">
+                <select v-model="orderFilter" class="form-input">
+                  <option value="">全部状态</option>
+                  <option value="PENDING">待处理</option>
+                  <option value="ASSIGNED">已分配</option>
+                  <option value="IN_PROGRESS">进行中</option>
+                  <option value="COMPLETED">已完成</option>
+                  <option value="CANCELLED">已取消</option>
+                  <option value="REJECTED">已拒绝</option>
+                </select>
 
-          </div>
-        </div>
-
-        <div class="orders-container">
-          <div v-if="filteredOrders.length === 0" class="empty-state">
-            <i class="fas fa-clipboard-list"></i>
-            <h3>暂无订单</h3>
-            <p>还没有维修订单</p>
-          </div>
-          <div v-for="order in filteredOrders" :key="order.id" class="order-card">
-            <div class="order-header">
-              <div>
-                <h3>{{ order.orderNumber }}</h3>
-                <p>{{ order.description }}</p>
               </div>
-              <span :class="['status-badge', order.status.toLowerCase()]">
+            </div>
+
+            <div class="orders-container">
+              <div v-if="filteredOrders.length === 0" class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>暂无订单</h3>
+                <p>还没有维修订单</p>
+              </div>
+              <div v-for="order in filteredOrders" :key="order.id" class="order-card">
+                <div class="order-header">
+                  <div>
+                    <h3>{{ order.orderNumber }}</h3>
+                    <p>{{ order.description }}</p>
+                  </div>
+                  <span :class="['status-badge', order.status.toLowerCase()]">
                 {{ getStatusText(order.status) }}
               </span>
-            </div>
-            <div class="order-body">
-              <div class="order-info">
-                <div class="info-item">
-                  <i class="fas fa-user"></i>
-                  <span>客户: {{ order.user?.name || '未知' }}</span>
                 </div>
-                <div class="info-item">
-                  <i class="fas fa-car"></i>
-                  <span>车辆: {{ getVehicleDisplay(order) }}</span>
+                <div class="order-body">
+                  <div class="order-info">
+                    <div class="info-item">
+                      <i class="fas fa-user"></i>
+                      <span>客户: {{ order.user?.name || '未知' }}</span>
+                    </div>
+                    <div class="info-item">
+                      <i class="fas fa-car"></i>
+                      <span>车辆: {{ getVehicleDisplay(order) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <i class="fas fa-calendar"></i>
+                      <span>创建: {{ formatDate(order.createdAt) }}</span>
+                    </div>
+                    <div class="info-item">
+                      <i class="fas fa-dollar-sign"></i>
+                      <span>费用: ¥{{ order.totalCost || 0 }}</span>
+                    </div>
+                  </div>
+                  <div v-if="order.technicians && order.technicians.length > 0" class="assigned-technicians">
+                    <h4>分配技师:</h4>
+                    <div class="technician-list">
+                      <span v-for="tech in order.technicians" :key="tech.id" class="technician-tag">
+                        {{ tech.name }} ({{ getSkillTypeName(tech.skillType) }})
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div class="info-item">
-                  <i class="fas fa-calendar"></i>
-                  <span>创建: {{ formatDate(order.createdAt) }}</span>
-                </div>
-                <div class="info-item">
-                  <i class="fas fa-dollar-sign"></i>
-                  <span>费用: ¥{{ order.totalCost || 0 }}</span>
-                </div>
-              </div>
-              <div v-if="order.technicians && order.technicians.length > 0" class="assigned-technicians">
-                <h4>分配技师:</h4>
-                <div class="technician-list">
-                  <span v-for="tech in order.technicians" :key="tech.id" class="technician-tag">
-                    {{ tech.name }} ({{ getSkillTypeName(tech.skillType) }})
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div class="order-footer">
-              <button class="btn btn-outline" @click="viewOrderDetail(order)">
-                <i class="fas fa-eye"></i> 查看详情
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- 技师管理页面 -->
-      <div v-if="activeTab === 'technicians'" class="tab-content">
-        <div class="section-header">
-          <h2>技师管理</h2>
-        </div>
-
-        <div class="technicians-container">
-          <div v-if="technicians.length === 0" class="empty-state">
-            <i class="fas fa-users-cog"></i>
-            <h3>暂无技师</h3>
-          </div>
-          <div v-for="technician in technicians" :key="technician.id" class="technician-card">
-            <div class="tech-avatar">
-              <i class="fas fa-user-hard-hat"></i>
-            </div>
-            <div class="tech-info">
-              <h3>{{ technician.name }}</h3>
-              <p class="tech-id">员工ID: {{ technician.employeeId }}</p>
-              <div class="tech-details">
-                <div class="detail-item">
-                  <span>工种：{{ getSkillTypeName(technician.skillType) }}</span>
-                </div>
-                <div class="detail-item">
-                  <span>¥{{ technician.hourlyRate }}/小时</span>
-                </div>
-                <div class="detail-item">
-                  <span>电话：{{ technician.phone }}</span>
+                <div class="order-footer">
+                  <button class="btn btn-outline" @click="viewOrderDetail(order)">
+                    <i class="fas fa-eye"></i> 查看详情
+                  </button>
                 </div>
               </div>
             </div>
-            <div class="tech-actions">
-              <button class="btn btn-danger btn-sm" @click="deleteTechnician(technician)">
-                 删除
-              </button>
-            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- 统计分析页面 (仅超级管理员) -->
-      <div v-if="activeTab === 'statistics' && isSuperAdmin" class="tab-content">
-        <div class="section-header">
-          <h2>统计分析</h2>
-          <div class="date-filters">
-            <input v-model="statisticsDateRange.start" type="date" class="form-input">
-            <span>至</span>
-            <input v-model="statisticsDateRange.end" type="date" class="form-input">
-            <button class="btn btn-primary" @click="loadStatistics">
-              <i class="fas fa-search"></i> 查询
-            </button>
-          </div>
-        </div>
-
-        <div class="statistics-container">
-          <!-- 图表区域 -->
-          <div class="charts-grid">
-            <!-- 收入构成图表 -->
-            <div class="chart-card">
-              <Chart
-                  title="收入构成分析"
-                  type="pie"
-                  :data="revenueChartData"
-                  :size="200"
-              />
+          <!-- 技师管理页面 -->
+          <div v-if="activeTab === 'technicians'" key="technicians" class="tab-content">
+            <div class="section-header">
+              <h2>技师管理</h2>
             </div>
 
-            <!-- 技师任务数量图表 -->
-            <div class="chart-card">
-              <Chart
-                  title="技师完成任务数量"
-                  type="bar"
-                  :data="technicianTasksChartData"
-                  :width="400"
-                  :height="300"
-              />
-            </div>
-
-            <!-- 技师收入图表 -->
-            <div class="chart-card">
-              <Chart
-                  title="技师收入统计"
-                  type="bar"
-                  :data="technicianEarningsChartData"
-                  :width="400"
-                  :height="300"
-              />
-            </div>
-
-            <!-- 订单状态分布 -->
-            <div class="chart-card">
-              <Chart
-                  title="订单状态分布"
-                  type="pie"
-                  :data="orderStatusChartData"
-                  :size="200"
-              />
-            </div>
-
-            <!-- 车辆品牌维修统计 -->
-            <div class="chart-card">
-              <Chart
-                  title="车辆品牌维修统计"
-                  type="bar"
-                  :data="vehicleBrandChartData"
-                  :width="400"
-                  :height="300"
-              />
-            </div>
-
-            <!-- 维修工种类型统计 -->
-            <div class="chart-card">
-              <Chart
-                  title="维修工种类型统计"
-                  type="bar"
-                  :data="skillTypeChartData"
-                  :width="400"
-                  :height="300"
-              />
+            <div class="technicians-container">
+              <div v-if="technicians.length === 0" class="empty-state">
+                <i class="fas fa-users-cog"></i>
+                <h3>暂无技师</h3>
+              </div>
+              <div v-for="technician in technicians" :key="technician.id" class="technician-card">
+                <div class="tech-avatar">
+                  <i class="fas fa-user-hard-hat"></i>
+                </div>
+                <div class="tech-info">
+                  <h3>{{ technician.name }}</h3>
+                  <p class="tech-id">员工ID: {{ technician.employeeId }}</p>
+                  <div class="tech-details">
+                    <div class="detail-item">
+                      <span>工种：{{ getSkillTypeName(technician.skillType) }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span>¥{{ technician.hourlyRate }}/小时</span>
+                    </div>
+                    <div class="detail-item">
+                      <span>电话：{{ technician.phone }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="tech-actions">
+                  <button class="btn btn-danger btn-sm" @click="deleteTechnician(technician)">
+                     删除
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
-          <!-- 详细数据表格 -->
-          <div class="stat-section">
-            <h3>技师工作量详细统计</h3>
-            <div class="technician-stats">
-              <table>
+          <!-- 统计分析页面 (仅超级管理员) -->
+          <div v-if="activeTab === 'statistics' && isSuperAdmin" key="statistics" class="tab-content">
+            <div class="section-header">
+              <h2>统计分析</h2>
+            </div>
+
+            <div class="statistics-container">
+              <!-- 详细数据表格 -->
+              <div class="stat-section">
+                <h3>技师工作量详细统计</h3>
+                <div class="technician-stats">
+                  <table>
+                    <thead>
+                    <tr>
+                      <th>技师</th>
+                      <th>技能类型</th>
+                      <th>完成任务数</th>
+                      <th>总收入</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr v-for="stat in statistics.technicianStats" :key="stat.technicianId">
+                      <td>{{ stat.technicianName }}</td>
+                      <td>{{ getSkillTypeName(stat.skillType) }}</td>
+                      <td>{{ stat.completedTasks }}</td>
+                      <td>¥{{ stat.totalEarnings }}</td>
+                    </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 全部反馈统计 -->
+              <div class="stat-section">
+                <h3>用户反馈统计</h3>
+                <div class="feedback-stats">
+                  <div v-if="statistics.allFeedback && statistics.allFeedback.length > 0">
+                    <table>
+                      <thead>
+                      <tr>
+                        <th>订单号</th>
+                        <th>评分</th>
+                        <th>反馈内容</th>
+                        <th>用户</th>
+                        <th>日期</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="feedback in statistics.allFeedback.slice(0, 10)" :key="feedback.id">
+                        <td>{{ feedback.repairOrder?.orderNumber || '未知' }}</td>
+                        <td>
+                          <div class="rating-stars">
+                              <span v-for="star in 5" :key="star"
+                                    :class="star <= feedback.rating ? 'star active' : 'star'">
+                                ★
+                              </span>
+                            <span class="rating-text">({{ feedback.rating }}分)</span>
+                          </div>
+                        </td>
+                        <td class="feedback-comment">{{ feedback.comment }}</td>
+                        <td>{{ feedback.user?.name || '未知用户' }}</td>
+                        <td>{{ formatDate(feedback.createdAt) }}</td>
+                      </tr>
+                      </tbody>
+                    </table>
+                    <div v-if="statistics.allFeedback.length > 10" class="feedback-pagination">
+                      <p>显示前10条，共{{ statistics.allFeedback.length }}条反馈</p>
+                    </div>
+                  </div>
+                  <div v-else class="no-feedback">
+                    <i class="fas fa-comments"></i>
+                    <p>暂无用户反馈</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 车辆品牌维修统计详细数据 -->
+              <div class="stat-section">
+                <h3>车辆品牌维修数量排行</h3>
+                <div class="brand-stats">
+                  <div v-if="statistics.vehicleBrandStats && statistics.vehicleBrandStats.length > 0">
+                    <table>
+                      <thead>
+                      <tr>
+                        <th>排名</th>
+                        <th>车辆品牌</th>
+                        <th>维修次数</th>
+                        <th>占比</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="(stat, index) in statistics.vehicleBrandStats" :key="stat.brand">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ stat.brand }}</td>
+                        <td>{{ stat.repairCount }}</td>
+                        <td>{{ ((stat.repairCount / allOrders.length) * 100).toFixed(1) }}%</td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div v-else class="no-data">
+                    <i class="fas fa-car"></i>
+                    <p>暂无车辆品牌统计数据</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 维修工种类型统计详细数据 -->
+              <div class="stat-section">
+                <h3>维修工种类型需求统计</h3>
+                <div class="skill-type-stats">
+                  <div v-if="statistics.skillTypeStats && statistics.skillTypeStats.length > 0">
+                    <table>
+                      <thead>
+                      <tr>
+                        <th>排名</th>
+                        <th>工种类型</th>
+                        <th>订单数量</th>
+                        <th>占比</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="(stat, index) in statistics.skillTypeStats" :key="stat.skillType">
+                        <td>{{ index + 1 }}</td>
+                        <td>{{ stat.skillType }}</td>
+                        <td>{{ stat.orderCount }}</td>
+                        <td>{{ ((stat.orderCount / allOrders.length) * 100).toFixed(1) }}%</td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div v-else class="no-data">
+                    <i class="fas fa-tools"></i>
+                    <p>暂无工种类型统计数据</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 用户管理页面 (仅超级管理员) -->
+          <div v-if="activeTab === 'users' && isSuperAdmin" key="users" class="tab-content">
+            <div class="section-header">
+              <h2>用户管理</h2>
+            </div>
+
+            <div class="users-container">
+              <table class="users-table">
                 <thead>
                 <tr>
-                  <th>技师</th>
-                  <th>技能类型</th>
-                  <th>完成任务数</th>
-                  <th>总收入</th>
+                  <th>ID</th>
+                  <th>用户名</th>
+                  <th>姓名</th>
+                  <th>电话</th>
+                  <th>邮箱</th>
+                  <th>车辆数</th>
+                  <th>订单数</th>
+                  <th>操作</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="stat in statistics.technicianStats" :key="stat.technicianId">
-                  <td>{{ stat.technicianName }}</td>
-                  <td>{{ getSkillTypeName(stat.skillType) }}</td>
-                  <td>{{ stat.completedTasks }}</td>
-                  <td>¥{{ stat.totalEarnings }}</td>
+                <tr v-for="user in filteredUsers" :key="user.id">
+                  <td>{{ user.id }}</td>
+                  <td>{{ user.username }}</td>
+                  <td>{{ user.name }}</td>
+                  <td>{{ user.phone }}</td>
+                  <td>{{ user.email }}</td>
+                  <td>{{ user.vehicleCount || 0 }}</td>
+                  <td>{{ user.orderCount || 0 }}</td>
+                  <td>
+                    <button class="btn btn-outline btn-sm" @click="viewUserDetail(user)">
+                      查看
+                    </button>
+                  </td>
                 </tr>
                 </tbody>
               </table>
             </div>
           </div>
-
-          <!-- 全部反馈统计 -->
-          <div class="stat-section">
-            <h3>用户反馈统计</h3>
-            <div class="feedback-stats">
-              <div v-if="statistics.allFeedback && statistics.allFeedback.length > 0">
-                <table>
-                  <thead>
-                  <tr>
-                    <th>订单号</th>
-                    <th>评分</th>
-                    <th>反馈内容</th>
-                    <th>用户</th>
-                    <th>日期</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr v-for="feedback in statistics.allFeedback.slice(0, 10)" :key="feedback.id">
-                    <td>{{ feedback.repairOrder?.orderNumber || '未知' }}</td>
-                    <td>
-                      <div class="rating-stars">
-                          <span v-for="star in 5" :key="star"
-                                :class="star <= feedback.rating ? 'star active' : 'star'">
-                            ★
-                          </span>
-                        <span class="rating-text">({{ feedback.rating }}分)</span>
-                      </div>
-                    </td>
-                    <td class="feedback-comment">{{ feedback.comment }}</td>
-                    <td>{{ feedback.user?.name || '未知用户' }}</td>
-                    <td>{{ formatDate(feedback.createdAt) }}</td>
-                  </tr>
-                  </tbody>
-                </table>
-                <div v-if="statistics.allFeedback.length > 10" class="feedback-pagination">
-                  <p>显示前10条，共{{ statistics.allFeedback.length }}条反馈</p>
+        </transition>
+      </div>
+      <!-- 订单详情模态框 -->
+      <div v-if="showOrderDetailModal && selectedOrderDetail" class="modal-overlay" @click="closeOrderDetailModal">
+        <div class="modal-content" @click.stop>
+          <div class="modal-header">
+            <h2>订单详情: {{ selectedOrderDetail.orderNumber }}</h2>
+            <button class="modal-close" @click="closeOrderDetailModal">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div class="order-detail-sections">
+              <div class="detail-section">
+                <h3>基本信息</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <label>订单号:</label>
+                    <span>{{ selectedOrderDetail.orderNumber }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>状态:</label>
+                    <span :class="['status-badge', selectedOrderDetail.status.toLowerCase()]">
+                      {{ getStatusText(selectedOrderDetail.status) }}
+                    </span>
+                  </div>
+                  <div class="detail-item">
+                    <label>描述:</label>
+                    <span>{{ selectedOrderDetail.description }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>创建时间:</label>
+                    <span>{{ formatDate(selectedOrderDetail.createdAt) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>更新时间:</label>
+                    <span>{{ formatDate(selectedOrderDetail.updatedAt) }}</span>
+                  </div>
+                  <div v-if="selectedOrderDetail.completedAt" class="detail-item">
+                    <label>完成时间:</label>
+                    <span>{{ formatDate(selectedOrderDetail.completedAt) }}</span>
+                  </div>
                 </div>
               </div>
-              <div v-else class="no-feedback">
-                <i class="fas fa-comments"></i>
-                <p>暂无用户反馈</p>
+
+              <div class="detail-section">
+                <h3>客户信息</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <label>客户姓名:</label>
+                    <span>{{ selectedOrderDetail.user?.name || '未知' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>联系电话:</label>
+                    <span>{{ selectedOrderDetail.user?.phone || '未知' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>邮箱:</label>
+                    <span>{{ selectedOrderDetail.user?.email || '未知' }}</span>
+                  </div>
+                </div>
               </div>
+
+              <div class="detail-section">
+                <h3>车辆信息</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <label>车牌号:</label>
+                    <span>{{ selectedOrderDetail.vehicle?.licensePlate || '未知' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>品牌:</label>
+                    <span>{{ selectedOrderDetail.vehicle?.brand || '未知' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>型号:</label>
+                    <span>{{ selectedOrderDetail.vehicle?.model || '未知' }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>年份:</label>
+                    <span>{{ selectedOrderDetail.vehicle?.year || '未知' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="selectedOrderDetail.technicians && selectedOrderDetail.technicians.length > 0" class="detail-section">
+                <h3>分配技师</h3>
+                <div class="technician-list">
+                  <div v-for="tech in selectedOrderDetail.technicians" :key="tech.id" class="technician-item">
+                    <div class="tech-info">
+                      <span class="tech-name">{{ tech.name }}</span>
+                      <span class="tech-skill">{{ getSkillTypeName(tech.skillType) }}</span>
+                      <span class="tech-rate">¥{{ tech.hourlyRate }}/小时</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-section">
+                <h3>费用信息</h3>
+                <div class="detail-grid">
+                  <div class="detail-item">
+                    <label>工时费:</label>
+                    <span>¥{{ selectedOrderDetail.laborCost || 0 }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>材料费:</label>
+                    <span>¥{{ selectedOrderDetail.materialCost || 0 }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <label>总费用:</label>
+                    <span class="total-cost">¥{{ selectedOrderDetail.totalCost || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+
+
             </div>
           </div>
-
-          <!-- 车辆品牌维修统计详细数据 -->
-          <div class="stat-section">
-            <h3>车辆品牌维修数量排行</h3>
-            <div class="brand-stats">
-              <div v-if="statistics.vehicleBrandStats && statistics.vehicleBrandStats.length > 0">
-                <table>
-                  <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th>车辆品牌</th>
-                    <th>维修次数</th>
-                    <th>占比</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr v-for="(stat, index) in statistics.vehicleBrandStats" :key="stat.brand">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ stat.brand }}</td>
-                    <td>{{ stat.repairCount }}</td>
-                    <td>{{ ((stat.repairCount / allOrders.length) * 100).toFixed(1) }}%</td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-data">
-                <i class="fas fa-car"></i>
-                <p>暂无车辆品牌统计数据</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- 维修工种类型统计详细数据 -->
-          <div class="stat-section">
-            <h3>维修工种类型需求统计</h3>
-            <div class="skill-type-stats">
-              <div v-if="statistics.skillTypeStats && statistics.skillTypeStats.length > 0">
-                <table>
-                  <thead>
-                  <tr>
-                    <th>排名</th>
-                    <th>工种类型</th>
-                    <th>订单数量</th>
-                    <th>占比</th>
-                  </tr>
-                  </thead>
-                  <tbody>
-                  <tr v-for="(stat, index) in statistics.skillTypeStats" :key="stat.skillType">
-                    <td>{{ index + 1 }}</td>
-                    <td>{{ stat.skillType }}</td>
-                    <td>{{ stat.orderCount }}</td>
-                    <td>{{ ((stat.orderCount / allOrders.length) * 100).toFixed(1) }}%</td>
-                  </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div v-else class="no-data">
-                <i class="fas fa-tools"></i>
-                <p>暂无工种类型统计数据</p>
-              </div>
-            </div>
+          <div class="modal-footer">
+            <button @click="closeOrderDetailModal" class="btn btn-outline">
+              <i class="fas fa-times"></i> 关闭
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- 用户管理页面 (仅超级管理员) -->
-      <div v-if="activeTab === 'users' && isSuperAdmin" class="tab-content">
-        <div class="section-header">
-          <h2>用户管理</h2>
-        </div>
-
-        <div class="users-container">
-          <table class="users-table">
-            <thead>
-            <tr>
-              <th>ID</th>
-              <th>用户名</th>
-              <th>姓名</th>
-              <th>电话</th>
-              <th>邮箱</th>
-              <th>车辆数</th>
-              <th>订单数</th>
-              <th>操作</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr v-for="user in filteredUsers" :key="user.id">
-              <td>{{ user.id }}</td>
-              <td>{{ user.username }}</td>
-              <td>{{ user.name }}</td>
-              <td>{{ user.phone }}</td>
-              <td>{{ user.email }}</td>
-              <td>{{ user.vehicleCount || 0 }}</td>
-              <td>{{ user.orderCount || 0 }}</td>
-              <td>
-                <button class="btn btn-outline btn-sm" @click="viewUserDetail(user)">
-                  查看
-                </button>
-              </td>
-            </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <!-- 添加技师模态框 -->
     </main>
 
     <!-- 订单详情模态框 -->
@@ -747,6 +790,15 @@ export default {
   created() {
     this.loadUserInfo();
     this.loadData();
+    // 定时自动刷新数据
+    this._refreshTimer = setInterval(() => {
+      this.loadData();
+    }, 30000); // 30秒刷新一次
+  },
+  beforeDestroy() {
+    if (this._refreshTimer) {
+      clearInterval(this._refreshTimer);
+    }
   },
   methods: {
     loadUserInfo() {
@@ -1283,129 +1335,79 @@ export default {
   min-height: 100vh;
 }
 
-/* 这里包含所有的CSS样式，与之前的技师页面类似但使用蓝色主题 */
-.welcome-section {
-  margin-bottom: 2rem;
-}
-
-.welcome-content {
+.dashboard-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  text-align: center;
-}
-
-.welcome-section h1 {
-  font-size: 2rem;
-  color: #1f2937;
-  margin-bottom: 1rem;
-}
-
-.role-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
-  color: white;
-  border-radius: 9999px;
-  font-weight: 500;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
   margin-bottom: 2rem;
 }
-
-.stat-card {
-  background: white;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2563eb;
+  letter-spacing: 2px;
+}
+.dashboard-userinfo {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.stat-icon {
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 1.25rem;
-}
-
-.stat-content h3 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0;
-  color: #1f2937;
-}
-
-.stat-content p {
-  margin: 0;
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.recent-orders {
-  margin-bottom: 2rem;
-}
-
-.recent-orders h2 {
-  margin-bottom: 1rem;
-  color: #1f2937;
-}
-
-.orders-table {
-  background: white;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-}
-
-.orders-table table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.orders-table th,
-.orders-table td {
-  padding: 1rem;
-  text-align: left;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.orders-table th {
-  background: #f9fafb;
-  font-weight: 600;
+  font-size: 1.1rem;
   color: #374151;
 }
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+.dashboard-username {
+  font-weight: 600;
 }
-
-.section-header h2 {
-  font-size: 1.5rem;
-  color: #1f2937;
-  margin: 0;
+.dashboard-role {
+  color: #6b7280;
 }
-
-.order-filters,
-.date-filters,
-.user-filters {
+.dashboard-content {
+  margin-top: 1rem;
+}
+.overview-cards {
   display: flex;
-  gap: 1rem;
-  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+.overview-card {
+  flex: 1;
+  background: linear-gradient(135deg, #e0e7ff 60%, #2563eb 100%);
+  color: #1e293b;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 180px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.overview-card:hover {
+  box-shadow: 0 8px 24px rgba(37,99,235,0.12);
+  transform: translateY(-2px) scale(1.03);
+}
+.overview-card-title {
+  font-size: 1.1rem;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+.overview-card-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+.refresh-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+}
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 
 .orders-container,
