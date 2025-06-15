@@ -29,7 +29,7 @@
           <i class="fas fa-history"></i> 工作历史
         </a>
         <a href="#" @click="activeTab = 'earnings'" :class="{ active: activeTab === 'earnings' }">
-          <i class="fas fa-dollar-sign"></i> 收入统计
+          <i class="fas fa-dollar-sign"></i> 工时费统计
         </a>
       </nav>
     </aside>
@@ -72,63 +72,6 @@
               <h3>{{ statistics.pendingTasks }}</h3>
               <p>进行中任务</p>
             </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-              <i class="fas fa-dollar-sign"></i>
-            </div>
-            <div class="stat-content">
-              <h3>¥{{ formatCurrency(statistics.monthlyEarnings || 0) }}</h3>
-              <p>本月收入</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 技师信息卡片 -->
-        <div class="info-section">
-          <div class="technician-card">
-            <div class="tech-avatar">
-              <i class="fas fa-user-hard-hat"></i>
-            </div>
-            <div class="tech-info">
-              <h3>{{ user.name }}</h3>
-              <p class="tech-id">员工ID: {{ user.employeeId }}</p>
-              <div class="tech-details">
-                <div class="detail-item">
-                  <i class="fas fa-cogs"></i>
-                  <span>{{ getSkillTypeName(user.skillType) }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="fas fa-dollar-sign"></i>
-                  <span>¥{{ user.hourlyRate }}/小时</span>
-                </div>
-                <div class="detail-item">
-                  <i class="fas fa-phone"></i>
-                  <span>{{ user.phone }}</span>
-                </div>
-                <div class="detail-item">
-                  <i class="fas fa-envelope"></i>
-                  <span>{{ user.email }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="earnings-overview">
-            <h3>收入概览</h3>
-            <div class="earnings-stats">
-              <div class="earnings-item">
-                <span class="earnings-label">本月收入</span>
-                <span class="earnings-value">¥{{ formatCurrency(earnings.monthly) }}</span>
-              </div>
-              <div class="earnings-item">
-                <span class="earnings-label">总收入</span>
-                <span class="earnings-value">¥{{ formatCurrency(earnings.total) }}</span>
-              </div>
-            </div>
-            <button class="btn btn-outline" @click="activeTab = 'earnings'">
-              <i class="fas fa-chart-line"></i> 查看详细
-            </button>
           </div>
         </div>
 
@@ -292,6 +235,10 @@
                   <i class="fas fa-dollar-sign"></i>
                   总费用: ¥{{ task.totalCost }}
                 </span>
+                <span class="metric" style="margin-left: 16px;">
+                  <i class="fas fa-clock"></i>
+                  工时费: ¥{{ task.laborCost || 0 }}
+                </span>
               </div>
             </div>
           </div>
@@ -306,24 +253,12 @@
         <div class="earnings-dashboard">
           <div class="earnings-summary">
             <div class="summary-card">
-              <h3>总收入</h3>
-              <div class="amount">¥{{ formatCurrency(earnings.total) }}</div>
-            </div>
             <div class="summary-card">
-              <h3>平均每单</h3>
-              <div class="amount">¥{{ statistics.completedTasks > 0 ? formatCurrency(earnings.total / statistics.completedTasks) : 0 }}</div>
-              <div class="change">
-                <i class="fas fa-minus"></i>
-                持平
-              </div>
-            </div>
-            <div class="summary-card">
-              <h3>本月收入</h3>
-              <div class="amount">¥{{ formatCurrency(earnings.monthly) }}</div>
-              <div class="tasks-count">{{ statistics.completedTasks }}个任务</div>
+              <h3>工时费总计</h3>
+              <div class="amount">¥{{ formatCurrency(earnings.laborTotal) }}</div>
             </div>
           </div>
-        </div>
+        </div></div>
       </div>
 
       <!-- 个人资料页面 -->
@@ -559,7 +494,7 @@ export default {
       earnings: {
         monthly: 0,
         total: 0,
-        averagePerTask: 0
+        laborTotal: 0
       },
       profileForm: {},
       isSubmitting: false
@@ -606,7 +541,7 @@ export default {
         await Promise.all([
           this.loadTasks(),
           this.loadStatistics(),
-          this.loadEarnings()
+          this.loadEarnings(),
         ]);
       } catch (error) {
         console.error('加载数据失败:', error);
@@ -672,40 +607,24 @@ export default {
     async loadEarnings() {
       try {
         console.log('开始加载技师收入数据，技师ID:', this.user.id);
-        
         // 获取总收入
         const totalEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/earnings`);
         const totalEarnings = totalEarningsResponse.data || 0;
-        
-        // 计算平均每任务收入
-        const completedTaskCount = this.statistics.completedTasks || 1;
-        const averagePerTask = totalEarnings / completedTaskCount;
-        
+        // 计算工时费总计
+        const laborTotal = this.completedTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
         this.earnings = {
           monthly: monthlyEarnings,
           total: totalEarnings,
-          averagePerTask: Math.round(averagePerTask * 100) / 100 // 保留两位小数
+          laborTotal: Math.round(laborTotal * 100) / 100
         };
-        
         console.log('设置收入数据:', this.earnings);
       } catch (error) {
         console.error('加载收入数据失败:', error);
-        
-        // 基于完成的任务估算收入作为备用
         const completedTasks = this.allTasks.filter(task => task.status === 'COMPLETED');
-        const estimatedTotal = completedTasks.reduce((sum, task) => {
-          // 估算：假设每个任务平均工作8小时
-          const estimatedHours = 8;
-          const hourlyRate = this.user.hourlyRate || 50;
-          return sum + (estimatedHours * hourlyRate);
-        }, 0);
-        
+        const laborTotal = completedTasks.reduce((sum, task) => sum + (task.laborCost || 0), 0);
         this.earnings = {
-          monthly: Math.round(estimatedTotal * 0.3 * 100) / 100, // 假设本月占30%
-          total: Math.round(estimatedTotal * 100) / 100,
-          averagePerTask: completedTasks.length > 0 ? Math.round((estimatedTotal / completedTasks.length) * 100) / 100 : 0
+          laborTotal: Math.round(laborTotal * 100) / 100
         };
-        
         console.log('使用估算的收入数据:', this.earnings);
       }
     },

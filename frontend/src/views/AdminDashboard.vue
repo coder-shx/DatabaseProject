@@ -11,9 +11,6 @@
           <i class="fas fa-chevron-down"></i>
         </div>
         <div v-if="showUserMenu" class="user-dropdown">
-          <a href="#" @click="activeTab = 'profile'">
-            <i class="fas fa-user-edit"></i> 个人资料
-          </a>
           <a href="#" @click="logout">
             <i class="fas fa-sign-out-alt"></i> 登出
           </a>
@@ -68,30 +65,12 @@
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-              <i class="fas fa-users-cog"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ dashboardStats.activeTechnicians }}</h3>
-              <p>活跃技师</p>
-            </div>
-          </div>
-          <div class="stat-card">
             <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
               <i class="fas fa-check-circle"></i>
             </div>
             <div class="stat-content">
               <h3>{{ dashboardStats.completedOrders }}</h3>
               <p>已完成订单</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-              <i class="fas fa-users-cog"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ dashboardStats.activeTechnicians }}</h3>
-              <p>活跃技师</p>
             </div>
           </div>
         </div>
@@ -170,16 +149,12 @@
       <div v-if="activeTab === 'technicians'" class="tab-content">
         <div class="section-header">
           <h2>技师管理</h2>
-          <button class="btn btn-primary" @click="showCreateTechnician = true">
-            <i class="fas fa-plus"></i> 添加技师
-          </button>
         </div>
 
         <div class="technicians-container">
           <div v-if="technicians.length === 0" class="empty-state">
             <i class="fas fa-users-cog"></i>
             <h3>暂无技师</h3>
-            <p>还没有添加技师</p>
           </div>
           <div v-for="technician in technicians" :key="technician.id" class="technician-card">
             <div class="tech-avatar">
@@ -201,9 +176,6 @@
               </div>
             </div>
             <div class="tech-actions">
-              <button class="btn btn-outline btn-sm" @click="editTechnician(technician)">
-            编辑
-              </button>
               <button class="btn btn-danger btn-sm" @click="deleteTechnician(technician)">
                  删除
               </button>
