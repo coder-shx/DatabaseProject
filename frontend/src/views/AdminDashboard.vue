@@ -55,7 +55,7 @@
             </button>
           </div>
         </div>
-
+</div>
         <!-- 统计卡片 -->
         <div class="stats-grid">
           <div class="stat-card">
@@ -95,45 +95,6 @@
             </div>
           </div>
         </div>
-
-        <!-- 最近订单 -->
-        <div class="recent-orders">
-          <h2>最近订单</h2>
-          <div class="orders-table">
-            <table>
-              <thead>
-              <tr>
-                <th>订单号</th>
-                <th>客户</th>
-                <th>车辆</th>
-                <th>状态</th>
-                <th>创建时间</th>
-                <th>操作</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="order in recentOrders" :key="order.id">
-                <td>{{ order.orderNumber }}</td>
-                <td>{{ order.user?.name || '未知' }}</td>
-                <td>{{ getVehicleDisplay(order) }}</td>
-                <td>
-                    <span :class="['status-badge', order.status.toLowerCase()]">
-                      {{ getStatusText(order.status) }}
-                    </span>
-                </td>
-                <td>{{ formatDate(order.createdAt) }}</td>
-                <td>
-                  <button class="btn btn-sm btn-primary" @click="viewOrderDetail(order)">
-                    查看
-                  </button>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
       <!-- 订单管理页面 -->
       <div v-if="activeTab === 'orders'" class="tab-content">
         <div class="section-header">
@@ -199,14 +160,6 @@
             <div class="order-footer">
               <button class="btn btn-outline" @click="viewOrderDetail(order)">
                 <i class="fas fa-eye"></i> 查看详情
-              </button>
-              <button class="btn btn-outline" @click="editOrder(order)">
-                <i class="fas fa-edit"></i> 编辑
-              </button>
-              <button v-if="['ASSIGNED', 'IN_PROGRESS'].includes(order.status)" 
-                      class="btn btn-danger btn-sm" 
-                      @click="rejectOrder(order)">
-                <i class="fas fa-times"></i> 拒绝订单
               </button>
             </div>
           </div>
@@ -478,12 +431,6 @@
       <div v-if="activeTab === 'users' && isSuperAdmin" class="tab-content">
         <div class="section-header">
           <h2>用户管理</h2>
-          <div class="user-filters">
-            <input v-model="userSearchTerm" placeholder="搜索用户..." class="form-input">
-            <button class="btn btn-primary" @click="loadUsers">
-              <i class="fas fa-search"></i> 搜索
-            </button>
-          </div>
         </div>
 
         <div class="users-container">

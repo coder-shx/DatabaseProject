@@ -179,7 +179,7 @@
                 <!-- 显示催单提醒 -->
                 <div v-if="task.urgeCount > 0" class="urge-reminder">
                   <i class="fas fa-bell"></i>
-                  客户催单次数：{{ task.urgeCount }}
+                  {{ task.urgeCount>0 ?"客户已催单":"客户未催单" }}<br>
                   <span v-if="task.lastUrgedAt" class="urge-time">
                     最近催单时间：{{ formatDate(task.lastUrgedAt) }}
                   </span>
@@ -243,7 +243,7 @@
                   <span>完成: {{ formatDate(task.completedAt) }}</span>
                 </div>
               </div>
-              <p><strong>工时费用:</strong> ¥{{ task.laborCost || 0 }}</p>
+          
             </div>
             <div class="task-footer">
               <button v-if="task.status === 'ASSIGNED'" @click="startTask(task)" class="btn btn-primary">
@@ -282,20 +282,15 @@
                 <p>{{ task.vehiclePlate }}</p>
               </div>
               <div class="completion-date">
-                <i class="fas fa-check-circle"></i>
-                {{ formatDate(task.endDate) }}
+               完成时间： {{ formatDate(task.completedAt) }}
               </div>
             </div>
             <div class="history-body">
-              <p>{{ task.description }}</p>
+              <p>故障描述：{{ task.description }}</p>
               <div class="history-metrics">
                 <span class="metric">
-                  <i class="fas fa-clock"></i>
-                  耗时: {{ calculateDuration(task.startDate, task.endDate) }}
-                </span>
-                <span class="metric">
                   <i class="fas fa-dollar-sign"></i>
-                  费用: ¥{{ task.actualCost || task.estimatedCost }}
+                  总费用: ¥{{ task.totalCost }}
                 </span>
               </div>
             </div>
@@ -308,28 +303,23 @@
         <div class="section-header">
           <h2>收入统计</h2>
         </div>
-        
         <div class="earnings-dashboard">
           <div class="earnings-summary">
             <div class="summary-card">
-              <h3>本月收入</h3>
-              <div class="amount">¥{{ formatCurrency(earnings.monthly) }}</div>
-              <div class="change positive">
-                <i class="fas fa-arrow-up"></i>
-                +12.5%
-              </div>
+              <h3>总收入</h3>
+              <div class="amount">¥{{ formatCurrency(earnings.total) }}</div>
             </div>
             <div class="summary-card">
               <h3>平均每单</h3>
-              <div class="amount">¥{{ formatCurrency(earnings.averagePerTask) }}</div>
+              <div class="amount">¥{{ statistics.completedTasks > 0 ? formatCurrency(earnings.total / statistics.completedTasks) : 0 }}</div>
               <div class="change">
                 <i class="fas fa-minus"></i>
                 持平
               </div>
             </div>
             <div class="summary-card">
-              <h3>总收入</h3>
-              <div class="amount">¥{{ formatCurrency(earnings.total) }}</div>
+              <h3>本月收入</h3>
+              <div class="amount">¥{{ formatCurrency(earnings.monthly) }}</div>
               <div class="tasks-count">{{ statistics.completedTasks }}个任务</div>
             </div>
           </div>
@@ -467,6 +457,7 @@
                 <label>工时费用:</label>
                 <span class="amount">¥{{ selectedTask.laborCost || 0 }}</span>
               </div>
+              
               <div class="detail-item">
                 <label>材料费用:</label>
                 <span class="amount">¥{{ selectedTask.materialCost || 0 }}</span>
@@ -510,10 +501,14 @@
           
           <form @submit.prevent="submitCompleteTask">
             <div class="form-group">
-              <label class="form-label">材料费用 <span class="required">*</span></label>
+              <label class="form-label">材料类型</label>
+              <textarea v-model="completeTaskForm.material" class="form-input" rows="3"
+                        placeholder="本次维修所用的材料"></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">材料费用 <span class="required"></span></label>
               <input v-model="completeTaskForm.materialCost" type="number" step="0.01" min="0" 
                      class="form-input" placeholder="请输入材料费用" required>
-              <small class="form-help">请输入本次维修使用的材料总费用</small>
             </div>
             
             <div class="form-group">
@@ -551,6 +546,7 @@ export default {
       allTasks: [],
       selectedTask: null,
       completeTaskForm: {
+        material: '',
         materialCost: '',
         workNotes: ''
       },
@@ -667,7 +663,6 @@ export default {
           totalTasks,
           completedTasks,
           pendingTasks,
-          monthlyEarnings: 0 // 无法本地计算，需要服务器端
         };
         
         console.log('使用本地计算的统计数据:', this.statistics);
@@ -681,10 +676,6 @@ export default {
         // 获取总收入
         const totalEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/earnings`);
         const totalEarnings = totalEarningsResponse.data || 0;
-        
-        // 获取本月收入
-        const monthlyEarningsResponse = await this.$axios.get(`/technicians/${this.user.id}/monthly-earnings`);
-        const monthlyEarnings = monthlyEarningsResponse.data || 0;
         
         // 计算平均每任务收入
         const completedTaskCount = this.statistics.completedTasks || 1;

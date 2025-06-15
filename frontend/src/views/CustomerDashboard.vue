@@ -2,100 +2,44 @@
   <div class="customer-dashboard">
     <aside class="sidebar">
       <div class="sidebar-user">
-        <div class="user-avatar">
-          <i class="fas fa-user"></i>
-        </div>
         <span class="user-name">{{ user.name || user.username }}</span>
         <div class="user-dropdown-btn" @click="toggleUserMenu">
           <i class="fas fa-chevron-down"></i>
         </div>
         <div v-if="showUserMenu" class="user-dropdown">
           <a href="#" @click="activeTab = 'profile'">
-            <i class="fas fa-user-edit"></i> 个人资料
+            个人资料
           </a>
           <a href="#" @click="logout">
-            <i class="fas fa-sign-out-alt"></i> 登出
+            登出
           </a>
         </div>
       </div>
       <nav class="nav-menu">
         <a href="#" @click="activeTab = 'overview'" :class="{ active: activeTab === 'overview' }">
-          <i class="fas fa-home"></i> 概览
+          概览
         </a>
         <a href="#" @click="activeTab = 'vehicles'" :class="{ active: activeTab === 'vehicles' }">
-          <i class="fas fa-car"></i> 我的车辆
+          我的车辆
         </a>
         <a href="#" @click="activeTab = 'orders'" :class="{ active: activeTab === 'orders' }">
-          <i class="fas fa-wrench"></i> 维修记录
+          维修记录
         </a>
         <a href="#" @click="activeTab = 'feedback'" :class="{ active: activeTab === 'feedback' }">
-          <i class="fas fa-comment"></i> 反馈
+          反馈
         </a>
       </nav>
     </aside>
     <main class="dashboard-main">
       <!-- 概览页面 -->
       <div v-if="activeTab === 'overview'" class="tab-content">
-        <div class="welcome-section">
-          <h1>欢迎回来，{{ user.name || user.username }}！</h1>
-          <p>管理您的车辆和维修服务</p>
-        </div>
-
-        <!-- 统计卡片 -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <i class="fas fa-car"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ statistics.vehicleCount }}</h3>
-              <p>我的车辆</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <i class="fas fa-wrench"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ statistics.repairCount }}</h3>
-              <p>维修次数</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">
-              <i class="fas fa-clock"></i>
-            </div>
-            <div class="stat-content">
-              <h3>{{ statistics.pendingCount }}</h3>
-              <p>待处理</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 最近维修记录 -->
-        <div class="recent-section">
-          <h2>最近维修记录</h2>
-          <div class="recent-orders">
-            <div v-if="recentOrders.length === 0" class="empty-state">
-              <i class="fas fa-inbox"></i>
-              <p>暂无维修记录</p>
-            </div>
-            <div v-for="order in recentOrders" :key="order.id" class="order-item">
-              <div class="order-info">
-                <h4>{{ getVehicleDisplay(order) }}</h4>
-                <p>{{ order.description }}</p>
-                <small>{{ formatDate(order.createdAt) }}</small>
-              </div>
-              <div class="order-status">
-                <span :class="['status', order.status.toLowerCase()]">
-                  {{ getStatusText(order.status) }}
-                </span>
-              </div>
-            </div>
-          </div>
+        <div>
+          <h2>我的车辆数：{{ statistics.vehicleCount }}</h2>
+          <h2>维修次数：{{ statistics.repairCount }}</h2>
+          <h2>待处理：{{ statistics.pendingCount }}</h2>
         </div>
       </div>
-
+          
       <!-- 车辆管理页面 -->
       <div v-if="activeTab === 'vehicles'" class="tab-content">
         <div class="section-header">
@@ -118,11 +62,8 @@
             <div class="vehicle-header">
               <h3>{{ vehicle.licensePlate || '未知车牌' }}</h3>
               <div class="vehicle-actions">
-                <button @click="editVehicle(vehicle)" class="btn-icon">
-                  <i class="fas fa-edit"></i>
-                </button>
                 <button @click="deleteVehicle(vehicle.id)" class="btn-icon danger">
-                  <i class="fas fa-trash"></i>
+                   删除
                 </button>
               </div>
             </div>
@@ -130,7 +71,6 @@
               <p><strong>品牌:</strong> {{ vehicle.brand || '未知' }}</p>
               <p><strong>车型:</strong> {{ vehicle.model || '未知' }}</p>
               <p><strong>年份:</strong> {{ vehicle.year || '未知' }}</p>
-              <p><strong>颜色:</strong> {{ vehicle.color || '未设置' }}</p>
               <p><strong>维修次数:</strong> {{ (vehicle.repairOrders && vehicle.repairOrders.length) || 0 }}</p>
             </div>
             <button @click="createRepairOrder(vehicle)" class="btn btn-outline">
@@ -163,7 +103,7 @@
               <div>
                 <h3>维修单 #{{ order.id }}</h3>
                 <p class="order-vehicle">{{ getVehicleDisplay(order) }}</p>
-              </div>
+              </div><strong>状态：</strong>
               <span :class="['status-badge', order.status.toLowerCase()]">
                 {{ getStatusText(order.status) }}
               </span>
@@ -171,7 +111,6 @@
             <div class="order-body">
               <p><strong>故障描述:</strong> {{ order.description }}</p>
               <p><strong>开始时间:</strong> {{ formatDate(order.createdAt) }}</p>
-              <p><strong>预估费用:</strong> ¥{{ (order.laborCost || 0) + (order.materialCost || 0) }}</p>
               <p v-if="order.totalCost"><strong>实际费用:</strong> ¥{{ order.totalCost }}</p>
             </div>
             <div class="order-footer">
@@ -184,7 +123,7 @@
                       :disabled="isOrderUrged(order)">
                 <i class="fas fa-bell"></i> 
                 {{ isOrderUrged(order) ? '已催单' : '催单' }}
-                <span v-if="order.urgeCount > 0" class="urge-count">({{ order.urgeCount }})</span>
+                <!-- <span v-if="order.urgeCount > 0" class="urge-count">({{ order.urgeCount }})</span> -->
               </button>
               <button @click="viewOrderDetail(order)" class="btn btn-primary">
                 <i class="fas fa-eye"></i> 查看详情
@@ -334,7 +273,7 @@
             </select>
             <small class="form-help">
               <i class="fas fa-info-circle"></i> 
-              我们会根据您选择的维修类型自动分配最合适的技师。如暂无对应技师，请您稍后再试或选择其他维修类型。
+              我们会根据您选择的维修类型自动分配最合适的技师。
             </small>
           </div>
           <div class="form-group">
@@ -776,10 +715,6 @@ export default {
     formatDate(dateString) {
       return new Date(dateString).toLocaleDateString('zh-CN');
     },
-    editVehicle(vehicle) {
-      // 实现编辑车辆功能
-      this.$emit('message', '编辑功能开发中', 'info');
-    },
     async deleteVehicle(vehicleId) {
       if (confirm('确定要删除这辆车吗？')) {
         try {
@@ -963,6 +898,7 @@ export default {
         }
         
         this.$emit('message', '催单成功，技师会加快处理', 'success');
+        this.loadData();
       } catch (error) {
         console.error('催单失败:', error);
         this.$emit('message', '催单失败: ' + (error.response?.data?.message || error.message), 'error');
